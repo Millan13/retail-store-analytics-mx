@@ -64,7 +64,7 @@ no fuera correcto.
 
 No di por bueno ningún resultado sin verificación. Los controles fueron:
 
-1. **Tests automáticos** en cada etapa (38 tests): contratos de datos, identidades contables,
+1. **Tests automáticos** en cada etapa (41 tests): contratos de datos, identidades contables,
    un test de fuga que altera las ventas futuras y comprueba que ninguna variable del pasado
    cambie, y tests que verifican que los estimadores recuperan efectos conocidos.
 2. **Auditoría independiente**: un segundo agente de IA, sin acceso al razonamiento del primero,
