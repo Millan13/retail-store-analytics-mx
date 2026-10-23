@@ -73,6 +73,8 @@ ni para ajustarse.
 - **Impacto simulado (pedido semanal):** −104 M MXN de venta perdida (−6%) y −607 M MXN de
   sobreinventario (−34%) en 18 semanas; 711 M MXN en total sobre una venta de 12,076 M MXN.
   Anualizado en proporción a la venta: ~1,760 M MXN (de ellos ~260 M MXN de venta recuperada).
+  **Concentración:** 482 de los 607 M MXN de sobreinventario evitado salen de la semana posterior al
+  Buen Fin; en las otras 17 semanas el ahorro en sobreinventario es de 125 M MXN.
 
 **Días sin festivo vs festivos** (notebook 02 §10):
 
