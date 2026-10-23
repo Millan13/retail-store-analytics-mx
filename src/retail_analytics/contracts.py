@@ -1,8 +1,8 @@
-"""Contratos de datos (pandera) para cada etapa del pipeline.
+"""Data contracts (pandera) for each stage of the pipeline.
 
-Un contrato documenta lo que *esperamos* de una tabla y falla en voz alta si no se
-cumple. Los contratos crudos describen el archivo tal como llega (con sus nulos);
-el contrato limpio describe lo que garantiza ``cleaning.build_clean_panel``.
+A contract documents what we *expect* from a table and fails loudly when it does not
+hold. Raw contracts describe the files as received (nulls included); the clean
+contract describes what ``cleaning.build_clean_panel`` guarantees.
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ CALENDAR_RAW = DataFrameSchema(
         "is_semana_santa": Column(bool),
     },
     checks=[
-        # Las banderas derivadas de la fecha deben ser coherentes con la fecha misma.
+        # Flags derived from the date must agree with the date itself.
         Check(lambda d: (d["date"].dt.dayofweek == d["day_of_week"]).all(), name="dow_coherente"),
         Check(
             lambda d: ((d["day_of_week"] >= 5) == d["is_weekend"]).all(), name="weekend_coherente"
@@ -89,8 +89,8 @@ CALENDAR_RAW = DataFrameSchema(
     name="calendar_raw",
 )
 
-# Lo que garantiza la limpieza: sin huecos en la malla, identidades contables cumplidas,
-# y nulos solo donde decidimos conservarlos (filas faltantes y units_sold).
+# What cleaning guarantees: no gaps in the grid, accounting identities hold, and nulls
+# only where we chose to keep them (missing rows and units_sold).
 TRANSACTIONS_CLEAN = DataFrameSchema(
     {
         "date": Column("datetime64[ns]"),
@@ -107,7 +107,7 @@ TRANSACTIONS_CLEAN = DataFrameSchema(
         "units_sold": Column(float, _positive, nullable=True),
         "has_promotion": Column("Int64", Check.isin([0, 1]), nullable=True),
         "cash_source": Column(
-            str, Check.isin(["reportado", "identidad", "ticket", "estimado", "sin_dato"])
+            str, Check.isin(["reported", "identity", "ticket", "estimated", "missing"])
         ),
     },
     checks=[
@@ -117,18 +117,18 @@ TRANSACTIONS_CLEAN = DataFrameSchema(
                 .dropna()
                 .all()
             ),
-            name="transacciones_cuadran",
+            name="transactions_add_up",
         ),
         Check(
             lambda d: (
                 (d["amount_total"] - d["amount_cash"] - d["amount_card"]).dropna().abs() < 0.05
             ).all(),
-            name="montos_cuadran",
+            name="amounts_add_up",
         ),
-        # Solo las filas que no existían en el archivo pueden venir sin transacciones.
+        # Only rows that did not exist in the file may lack transactions.
         Check(
             lambda d: d.loc[~d["is_missing_row"], "transactions_clean"].notna().all(),
-            name="sin_nulos_en_filas_reales",
+            name="no_nulls_in_real_rows",
         ),
     ],
     unique=["date", "store_id", "category"],
@@ -138,12 +138,12 @@ TRANSACTIONS_CLEAN = DataFrameSchema(
 
 
 def validate_raw(transactions, stores, calendar) -> None:
-    """Valida los tres datasets crudos; lanza ``SchemaErrors`` con todos los fallos juntos.
+    """Validate the three raw datasets; raise ``SchemaErrors`` with every failure at once.
 
     Parameters
     ----------
     transactions, stores, calendar : pandas.DataFrame
-        Salida de ``io.load_raw``.
+        Output of ``io.load_raw``.
     """
     TRANSACTIONS_RAW.validate(transactions, lazy=True)
     STORES_RAW.validate(stores, lazy=True)

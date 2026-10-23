@@ -26,12 +26,12 @@ def test_cash_reconstruction_by_identity_and_ticket(tx_small, calendar_small):
     out = reconstruct_payments(complete_grid(tx_small, calendar_small))
     # día 2: sin promo -> 120 - 70
     assert out.loc[1, "cash_transactions"] == 50
-    assert out.loc[1, "cash_source"] == "identidad"
+    assert out.loc[1, "cash_source"] == "identity"
     # día 3: promo -> 11000 / 100 - 50 = 60 (NO 130 - 50 = 80, el total viene inflado)
     assert out.loc[2, "cash_transactions"] == 60
     assert out.loc[2, "cash_source"] == "ticket"
     assert out.loc[2, "phantom_transactions"] == 20
-    assert out.loc[3, "cash_source"] == "sin_dato"
+    assert out.loc[3, "cash_source"] == "missing"
 
 
 def test_amount_cash_and_ticket_filled_consistently(tx_small, calendar_small):
@@ -46,7 +46,7 @@ def test_estimated_cash_when_promo_without_ticket(tx_small, calendar_small):
     out = reconstruct_payments(complete_grid(tx, calendar_small))
     # efectivo estimado = monto_efectivo / ticket_tarjeta = 6000 / (5000/50) = 60
     assert out.loc[2, "cash_transactions"] == 60
-    assert out.loc[2, "cash_source"] == "estimado"
+    assert out.loc[2, "cash_source"] == "estimated"
 
 
 def test_units_sold_is_not_imputed(tx_small, calendar_small):

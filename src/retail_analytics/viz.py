@@ -1,7 +1,7 @@
-"""Estilo único para todas las gráficas del proyecto.
+"""Single plotting style for every chart in the project.
 
-Paleta categórica en orden fijo (validada para daltonismo en pares adyacentes);
-los colores siguen a la entidad, nunca a su posición en un ranking.
+Categorical palette in a fixed order (validated for color-vision deficiency on
+adjacent pairs); colors follow the entity, never its position in a ranking.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ REGION_COLORS = dict(zip(REGION_ORDER, SERIES, strict=False))
 
 
 def set_style() -> None:
-    """Aplica el tema de seaborn con la paleta del proyecto (fondo, tipografía y rejilla discretos)."""
+    """Apply the seaborn theme with the project palette (quiet surface, type and grid)."""
     sns.set_theme(context="notebook", style="whitegrid", palette=SERIES, font_scale=0.95)
     plt.rcParams.update(
         {
@@ -65,7 +65,7 @@ def set_style() -> None:
 
 
 def fmt_millions(ax, axis: str = "y", decimals: int = 0) -> None:
-    """Formatea un eje en millones (``12 M``).
+    """Format an axis in millions (``12 M``).
 
     Parameters
     ----------
@@ -78,7 +78,7 @@ def fmt_millions(ax, axis: str = "y", decimals: int = 0) -> None:
 
 
 def fmt_thousands(ax, axis: str = "y") -> None:
-    """Formatea un eje con separador de miles.
+    """Format an axis with thousands separators.
 
     Parameters
     ----------
@@ -90,7 +90,7 @@ def fmt_thousands(ax, axis: str = "y") -> None:
 
 
 def fmt_pct(ax, axis: str = "y", decimals: int = 0) -> None:
-    """Formatea un eje como porcentaje a partir de fracciones (0.1 → 10%).
+    """Format an axis as a percentage from fractions (0.1 -> 10%).
 
     Parameters
     ----------
@@ -103,26 +103,26 @@ def fmt_pct(ax, axis: str = "y", decimals: int = 0) -> None:
 
 
 def subtitle(ax, text: str) -> None:
-    """Agrega un subtítulo gris bajo el título (la "lectura" de la gráfica).
+    """Add a gray subtitle under the title (how to read the chart).
 
     Parameters
     ----------
     ax : matplotlib.axes.Axes
     text : str
     """
-    # Sube el título para dejar espacio a la línea gris debajo de él.
+    # Push the title up to make room for the gray line below it.
     ax.set_title(ax.get_title(loc="left"), loc="left", pad=20)
     ax.text(0, 1.015, text, transform=ax.transAxes, color=INK_2, fontsize=9, va="bottom")
 
 
 def save(fig, name: str) -> None:
-    """Guarda la figura en ``reports/figures/<name>.png``.
+    """Save the figure to ``reports/figures/<name>.png``.
 
     Parameters
     ----------
     fig : matplotlib.figure.Figure
     name : str
-        Nombre sin extensión.
+        File name without extension.
     """
     from retail_analytics.config import project_path
 

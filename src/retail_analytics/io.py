@@ -1,8 +1,8 @@
-"""Carga de los tres archivos crudos con tipos explícitos.
+"""Loading of the three raw files with explicit dtypes.
 
-Los tipos se fijan aquí y no se dejan a la inferencia de pandas: ``cash_transactions``
-llega como float por sus nulos, los booleanos del calendario llegan como texto, etc.
-Tener un solo punto de entrada evita que cada notebook "arregle" los tipos a su manera.
+Dtypes are fixed here instead of left to pandas inference: ``cash_transactions``
+arrives as float because of its nulls, calendar booleans arrive as text, etc.
+A single entry point keeps every notebook from "fixing" dtypes its own way.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ STORE_BOOL_COLS = ["has_pharmacy", "has_fuel_station"]
 
 @dataclass(frozen=True)
 class RawData:
-    """Contenedor de los tres datasets crudos."""
+    """Container for the three raw datasets."""
 
     transactions: pd.DataFrame
     stores: pd.DataFrame
@@ -42,18 +42,18 @@ def _uri(name: str, location: str | None) -> str:
 
 
 def load_transactions(location: str | None = None) -> pd.DataFrame:
-    """Lee ``transactions.csv``.
+    """Read ``transactions.csv``.
 
     Parameters
     ----------
     location : str, optional
-        Carpeta local o URI (``gs://...``). Por defecto la de la configuración.
+        Local folder or URI (``gs://...``). Defaults to the configured location.
 
     Returns
     -------
     pandas.DataFrame
-        Una fila por fecha × tienda × categoría. Los conteos con nulos quedan como
-        ``Int64`` (entero que admite nulos) para no mezclar enteros con floats.
+        One row per date x store x category. Counts with nulls are ``Int64``
+        (nullable integer) so integers are not mixed with floats.
     """
     df = pd.read_csv(
         _uri("transactions", location),
@@ -66,17 +66,17 @@ def load_transactions(location: str | None = None) -> pd.DataFrame:
 
 
 def load_stores(location: str | None = None) -> pd.DataFrame:
-    """Lee ``stores.csv`` con categóricas ordenadas donde el orden tiene sentido.
+    """Read ``stores.csv``, with ordered categoricals where the order is meaningful.
 
     Parameters
     ----------
     location : str, optional
-        Carpeta local o URI. Por defecto la de la configuración.
+        Local folder or URI. Defaults to the configured location.
 
     Returns
     -------
     pandas.DataFrame
-        Una fila por tienda.
+        One row per store.
     """
     df = pd.read_csv(_uri("stores", location), dtype={"store_id": "string"})
     df["store_format"] = pd.Categorical(
@@ -92,17 +92,17 @@ def load_stores(location: str | None = None) -> pd.DataFrame:
 
 
 def load_calendar(location: str | None = None) -> pd.DataFrame:
-    """Lee ``calendar.csv``.
+    """Read ``calendar.csv``.
 
     Parameters
     ----------
     location : str, optional
-        Carpeta local o URI. Por defecto la de la configuración.
+        Local folder or URI. Defaults to the configured location.
 
     Returns
     -------
     pandas.DataFrame
-        Una fila por día del periodo.
+        One row per day of the period.
     """
     df = pd.read_csv(_uri("calendar", location), parse_dates=["date"])
     for col in CALENDAR_BOOL_COLS:
@@ -111,12 +111,12 @@ def load_calendar(location: str | None = None) -> pd.DataFrame:
 
 
 def load_raw(location: str | None = None) -> RawData:
-    """Carga los tres datasets.
+    """Load the three datasets.
 
     Parameters
     ----------
     location : str, optional
-        Carpeta local o URI. Por defecto la de la configuración.
+        Local folder or URI. Defaults to the configured location.
 
     Returns
     -------
@@ -130,20 +130,20 @@ def load_raw(location: str | None = None) -> RawData:
 
 
 def verify_manifest(location: str | Path | None = None) -> dict[str, bool]:
-    """Compara el SHA-256 de cada CSV contra ``MANIFEST.sha256``.
+    """Compare the SHA-256 of each CSV against ``MANIFEST.sha256``.
 
-    Es el control de versión de los datos: si alguien reemplaza un CSV, los
-    resultados ya no son comparables y este chequeo lo detecta.
+    This is the data-versioning check: if someone replaces a CSV, results are no
+    longer comparable and this check catches it.
 
     Parameters
     ----------
     location : str or Path, optional
-        Carpeta con los CSV y el manifiesto.
+        Folder with the CSVs and the manifest.
 
     Returns
     -------
     dict
-        ``{archivo: coincide}`` para cada archivo listado en el manifiesto.
+        ``{file_name: matches}`` for every file listed in the manifest.
     """
     base = str(location or raw_data_location())
     with fsspec.open(f"{base}/{load_config()['files']['manifest']}", "r") as fh:
