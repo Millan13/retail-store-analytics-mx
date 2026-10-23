@@ -1,4 +1,4 @@
-.PHONY: setup lint test test-all eda forecast promotions potential requirements
+.PHONY: setup lint test test-all eda forecast predict promotions potential requirements
 
 setup:  ## Crea el entorno con las versiones fijadas en uv.lock
 	uv sync --all-groups
@@ -20,6 +20,9 @@ eda:  ## Re-ejecuta el notebook de EDA en sitio
 
 forecast:  ## Selección, ajuste y comparación de modelos (≈30 min); resultados en data/processed
 	uv run python -m retail_analytics.pipeline
+
+predict:  ## Pronóstico de los próximos 7 días con el modelo elegido; data/processed/pronostico_proxima_semana.csv
+	uv run python -m retail_analytics.predict
 
 promotions:  ## Efecto de las promociones; resultados en data/processed/promociones_*.csv
 	uv run python -m retail_analytics.analyses promotions

@@ -22,8 +22,9 @@ jobs:
         run: uv run ruff check src tests notebooks
       - name: Tests (incluye integridad de los datos crudos)
         run: uv run pytest
-      - name: Scripts de promociones y potencial
+      - name: Scripts de predicción, promociones y potencial
         run: |
+          uv run python -m retail_analytics.predict
           uv run python -m retail_analytics.analyses promotions
           uv run python -m retail_analytics.analyses potential
 
@@ -41,5 +42,6 @@ jobs:
         run: .\make.bat test-all
       - name: Scripts con make.bat
         run: |
+          .\make.bat predict
           .\make.bat promotions
           .\make.bat potential
