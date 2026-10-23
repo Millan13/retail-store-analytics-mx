@@ -49,7 +49,6 @@ Cada etapa se trabajó en su propia rama de git y se integró a `main` al cerrar
 | Seguimiento de experimentos | MLflow (backend SQLite local, `mlflow.db`) |
 | Visualización | seaborn / matplotlib; geopandas y folium para mapas |
 | Calidad de código | pytest, ruff, pre-commit, GitHub Actions (Linux y Windows) |
-| Datos en la nube | lectura `gs://` vía `fsspec` (variable `RAW_DATA_URI`); credenciales solo por variables de entorno |
 
 ## 4. Uso de inteligencia artificial
 
