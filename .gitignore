@@ -1,0 +1,31 @@
+# Entorno
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Secretos: nunca se versionan
+.env
+*.json.key
+credentials*.json
+
+# Datos derivados (se regeneran con `make data`)
+data/processed/*
+!data/processed/.gitkeep
+
+# Seguimiento de experimentos local
+mlruns/
+mlartifacts/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Material del caso que no se publica
+_private/
+
+# Sistema
+.DS_Store

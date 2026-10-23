@@ -1,0 +1,24 @@
+# Configuración central del proyecto. Las rutas son relativas a la raíz del repo.
+# Para leer los datos desde la nube, define RAW_DATA_URI (ej. gs://mi-bucket/retail/raw) en .env;
+# esa variable tiene prioridad sobre paths.raw.
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  figures: reports/figures
+
+files:
+  transactions: transactions.csv
+  stores: stores.csv
+  calendar: calendar.csv
+  manifest: MANIFEST.sha256
+
+keys:
+  panel: [date, store_id, category]
+
+# Columnas que NO pueden usarse como variables de un modelo (ver notebooks/01_eda.ipynb, sección 5).
+leaky_columns:
+  - replenishment_signal       # promedio de total_transactions de t-5 a t+1: incluye el día siguiente
+  - total_transactions         # inflada en días con promoción; usar transactions_clean
+
+seed: 42
