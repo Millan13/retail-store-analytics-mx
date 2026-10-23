@@ -54,8 +54,30 @@ FEATURE_GROUPS: dict[str, list[str]] = {
     "category": ["category_code"],
     "promotion": ["has_promotion"],
 }
+# Holiday families defined by what people do that day (business criterion), so that a
+# holiday never seen in training can borrow the effect of others in its family.
+# Experimental: not part of FEATURE_GROUPS, so the official model is unchanged.
+HOLIDAY_FAMILIES = {
+    "Año Nuevo": "descanso",
+    "Día de la Constitución": "descanso",
+    "Natalicio Benito Juárez": "descanso",
+    "Jueves Santo": "descanso",
+    "Viernes Santo": "descanso",
+    "Día del Trabajo": "descanso",
+    "Día de la Independencia": "celebracion",
+    "Día de Muertos": "celebracion",
+    "Virgen de Guadalupe": "celebracion",
+    "Nochebuena": "celebracion",
+    "Navidad": "celebracion",
+    "Fin de Año": "celebracion",
+    "Buen Fin": "evento_comercial",
+    "Revolución Mexicana / Buen Fin": "evento_comercial",
+}
+EXPERIMENTAL_FEATURES = ["holiday_family"]
+
 CATEGORICAL_FEATURES = [
     "holiday",
+    "holiday_family",
     "store_format",
     "region",
     "socioeconomic_level",
@@ -79,11 +101,17 @@ def add_calendar_features(panel: pd.DataFrame) -> pd.DataFrame:
     Returns
     -------
     pandas.DataFrame
-        Copy with ``day_of_month`` and ``holiday`` (holiday name or ``"none"``).
+        Copy with ``day_of_month``, ``holiday`` (holiday name or ``"none"``) and
+        ``holiday_family`` (``descanso``, ``celebracion``, ``evento_comercial`` or ``"none"``).
     """
     out = panel.copy()
     out["day_of_month"] = out["date"].dt.day
     out["holiday"] = out["holiday_name"].fillna("none").astype("category")
+    family = out["holiday_name"].map(HOLIDAY_FAMILIES)
+    unmapped = out.loc[out["holiday_name"].notna() & family.isna(), "holiday_name"].unique()
+    if len(unmapped):
+        raise ValueError(f"Holidays without a family: {list(unmapped)}")
+    out["holiday_family"] = family.fillna("none").astype("category")
     return out
 
 
