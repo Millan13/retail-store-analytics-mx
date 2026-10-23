@@ -33,7 +33,7 @@ matrices de priorización para decidir dónde actuar.
 | Pronóstico | `notebooks/02_pronostico.ipynb`, `features.py`, `forecast.py`, `evaluate.py`, `pipeline.py` | Test de fuga, auditoría independiente, backtest con origen móvil |
 | Promociones | `notebooks/03_promociones.ipynb`, `promotions.py` | Prueba A/A, test que recupera un efecto conocido |
 | Potencial | `notebooks/04_potencial_tiendas.ipynb`, `potential.py` | Estabilidad del índice entre periodos, sensibilidad al método |
-| Comunicación | `README.md`, `MODEL_CARD.md`, presentación ejecutiva | |
+| Comunicación | `README.md`, `MODEL_CARD.md` y una presentación ejecutiva que se comparte por separado | |
 
 Cada etapa se trabajó en su propia rama de git y se integró a `main` al cerrarse.
 

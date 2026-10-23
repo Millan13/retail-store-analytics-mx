@@ -1,7 +1,7 @@
 """Single plotting style for every chart in the project.
 
-Colors follow the retail visual kit: white surface, dark-blue text, True Blue as the
-main data color and yellow only as an accent. Each store format keeps one color in
+Colors follow the chain's visual kit: white surface, dark-blue text, primary blue as
+the main data color and yellow only as an accent. Each store format keeps one color in
 every chart. All series colors were checked with the dataviz palette validator
 (lightness band, chroma floor, color-vision-deficiency and normal-vision separation);
 the kit's two greens for Bodega and Express fail the normal-vision floor, so Bodega
@@ -16,26 +16,26 @@ from matplotlib.ticker import FuncFormatter
 
 # Surfaces and ink
 SURFACE = "#FFFFFF"
-INK = "#001E60"  # Bentonville: titles and primary text
+INK = "#001E60"  # dark blue: titles and primary text
 INK_2 = "#62718A"  # secondary text, subtitles, tick labels
 MUTED = "#B7C0CE"  # de-emphasized marks ("the rest")
 GRID = "#D8E3F0"
 AXIS = "#D4D4D4"
 
 # Data colors
-TRUE_BLUE = "#0053E2"  # main series / chosen model
-NAVY = "#001E60"  # reference series (current system) next to True Blue
-SPARK_YELLOW = "#FFC220"  # accent only (highlight bands, callouts), never a series
-SERIES = [TRUE_BLUE, NAVY]
+PRIMARY_BLUE = "#0053E2"  # main series / chosen model
+NAVY = "#001E60"  # reference series (current system) next to primary blue
+ACCENT_YELLOW = "#FFC220"  # accent only (highlight bands, callouts), never a series
+SERIES = [PRIMARY_BLUE, NAVY]
 SEQ_BLUE = ["#E8EFFB", "#C3D4F5", "#8FB0EE", "#5A8BE8", "#0053E2", "#003A9E", "#001E60"]
-DIVERGING = {"neg": "#D7263D", "mid": "#EEF1F6", "pos": TRUE_BLUE}
+DIVERGING = {"neg": "#D7263D", "mid": "#EEF1F6", "pos": PRIMARY_BLUE}
 
 CATEGORY_ORDER = ["Abarrotes", "Bebidas", "Cuidado_Personal", "Hogar", "Electronica", "Ropa"]
 FORMAT_ORDER = ["Express", "Bodega", "Supercenter"]
 REGION_ORDER = ["Norte", "Occidente", "Centro", "Oriente", "Sur"]
 
 # One color per format, everywhere (validated all-pairs: CVD 13.1, normal vision 26.3).
-FORMAT_COLORS = {"Express": "#008B30", "Bodega": "#E0A100", "Supercenter": TRUE_BLUE}
+FORMAT_COLORS = {"Express": "#008B30", "Bodega": "#E0A100", "Supercenter": PRIMARY_BLUE}
 
 
 def set_style() -> None:
