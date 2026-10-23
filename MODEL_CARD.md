@@ -74,13 +74,33 @@ ni para ajustarse.
   sobreinventario (−34%) en 18 semanas; 711 M MXN en total sobre una venta de 12,076 M MXN.
   Anualizado en proporción a la venta: ~1,760 M MXN (de ellos ~260 M MXN de venta recuperada).
 
+**Días sin festivo vs festivos** (notebook 02 §10):
+
+| Tipo de día | Días | LightGBM | Sistema actual |
+|---|---|---|---|
+| Sin festivo | 112 | 28.4% | 40.5% |
+| Festivo | 11 | 61.3% | 64.3% |
+
+En los festivos, el desempeño depende de si el modelo ya había visto ese festivo. Solo uno de los
+11 festivos de la prueba tenía antecedente (Día de la Constitución): ahí el error fue 25% contra
+123% del sistema actual. En festivos nuevos de "celebración con compra" (Día de Muertos,
+Guadalupe, Navidad) el modelo fue **peor** que el sistema actual, porque antes de la prueba solo
+había visto festivos de descanso (que hunden la venta) y aplicó ese efecto a días que la suben.
+
+**Experimento exploratorio:** agrupar los festivos en familias (descanso, celebración con compra,
+evento comercial) mejora los 11 festivos y baja el error total de 34.9% a 33.9%. Las familias se
+definieron después de ver la prueba, así que no reemplaza el resultado oficial; queda como mejora
+a validar con datos nuevos.
+
 Detalle completo en [notebooks/02_pronostico.ipynb](notebooks/02_pronostico.ipynb).
 
 ## Limitaciones y consideraciones de uso
 
-- **Eventos sin historia.** Los datos empiezan en enero de 2023: el Buen Fin y la Navidad de 2023
-  son los primeros. Ningún modelo pudo aprenderlos. Con un año más de datos, un rezago de 364 días
-  los capturaría; mientras tanto, esas semanas requieren un ajuste manual del planeador.
+- **Festivos sin historia.** Los datos empiezan en enero de 2023: casi todos los festivos de la
+  prueba (incluidos Buen Fin y Navidad) eran los primeros de su tipo. En festivos de celebración
+  nunca vistos el modelo puede ser peor que el sistema actual. Durante el primer año se recomienda
+  ajuste manual del planeador por familia de festivo; con un año de historia cada festivo tiene
+  antecedente, y las familias de festivos son la mejora propuesta mientras tanto.
 - **Ruido diario irreducible.** Aun conociendo de antemano el perfil real de cada serie, el error
   en días normales sería ~27%, y ~18% si además se conociera la afluencia real de cada tienda ese
   día (notebook 02 §8). El modelo debe usarse junto con inventario de seguridad, no como cifra

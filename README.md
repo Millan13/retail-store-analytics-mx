@@ -35,7 +35,7 @@ Requisitos: [uv](https://docs.astral.sh/uv/) (instala Python 3.12 por su cuenta)
 
 ```bash
 make setup      # entorno con versiones fijadas (uv.lock), kernel de Jupyter y hooks de pre-commit
-make test-all   # 41 pruebas, incluida la validación de los CSV reales (checksum + contratos)
+make test-all   # 42 pruebas, incluida la validación de los CSV reales (checksum + contratos)
 make forecast   # selección de variables, ajuste y comparación de modelos (~30 min); escribe data/processed/
 make eda        # re-ejecuta el notebook de EDA
 ```
@@ -78,8 +78,10 @@ tests/                  pruebas unitarias, de fuga de información y de integrid
 
 ## Limitaciones principales
 
-- Los datos empiezan en enero de 2023: el Buen Fin y la Navidad de 2023 son los primeros, y
-  ningún modelo pudo aprenderlos.
+- Los datos empiezan en enero de 2023: casi todos los festivos de la prueba eran los primeros de
+  su tipo. En días sin festivo el modelo reduce el error 30% (28.4% vs 40.5%); en festivos nuevos
+  de celebración puede ser peor que el sistema actual. Agrupar festivos por familia mejora los 11
+  festivos de la prueba (análisis exploratorio, notebook 02 §10).
 - El impacto en MXN del pronóstico es una simulación (no hay datos de inventario, agotados ni
   costos); se propone confirmarlo con un piloto con grupo control.
 - Las tiendas no tienen ubicación: el mapa es por región, con una asignación de estados que es un

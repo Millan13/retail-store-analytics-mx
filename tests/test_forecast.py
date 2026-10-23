@@ -33,7 +33,7 @@ def panel() -> pd.DataFrame:
                         "category": cat,
                         "units_sold": float(rng.integers(50, 150)),
                         "transactions_clean": int(rng.integers(20, 60)),
-                        "holiday_name": "Feriado" if d.day == 5 else None,
+                        "holiday_name": "Día del Trabajo" if d.day == 5 else None,
                         "is_holiday": d.day == 5,
                         "day_of_week": d.dayofweek,
                         "month": d.month,
@@ -242,3 +242,18 @@ def test_choose_model_keeps_clearly_better_complex_model():
     preds = _preds({"poisson_glm": 0.30, "lightgbm": 0.15})
     chosen, _ = ev.choose_model(preds)
     assert chosen == "lightgbm"
+
+
+def test_holiday_family_mapping_and_unknown_holiday_rejected():
+    from retail_analytics.features import add_calendar_features
+
+    base = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2023-12-24", "2023-05-01", "2023-06-01"]),
+            "holiday_name": ["Nochebuena", "Día del Trabajo", None],
+        }
+    )
+    out = add_calendar_features(base)
+    assert out["holiday_family"].tolist() == ["celebracion", "descanso", "none"]
+    with pytest.raises(ValueError, match="without a family"):
+        add_calendar_features(base.assign(holiday_name=["Festivo inventado", None, None]))
