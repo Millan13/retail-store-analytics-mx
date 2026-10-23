@@ -32,6 +32,30 @@ la señal de reposición usa la venta del día siguiente, y el conteo de transac
 Los notebooks se leen de arriba abajo: cada sección abre con una pregunta y cierra con una
 decisión o conclusión. La lógica vive en `src/retail_analytics/` y tiene pruebas automáticas.
 
+## Notebooks y scripts: qué es cada cosa
+
+| | Notebooks (`notebooks/`) | Scripts (`src/retail_analytics/`) |
+|---|---|---|
+| Para qué | Ver el análisis: gráficas, tablas y conclusiones | Correr el análisis sin intervención; es el código que se llevaría a producción |
+| Contienen lógica | No: importan las funciones de los scripts | Sí: limpieza, variables, modelos, métricas y análisis, con docstrings y pruebas |
+| Cómo se corren | Jupyter o VS Code | Terminal: `make forecast`, `make promotions`, `make potential` |
+
+**Cómo se llevaría el pronóstico a producción.** La propuesta completa está en
+[MODEL_CARD.md](MODEL_CARD.md#cómo-se-operaría). En resumen:
+
+1. **Un comando de predicción semanal.** Hoy `pipeline.py` evalúa el modelo en el histórico
+   (backtest). El paso que falta es un comando que, con las mismas funciones de `features.py` y
+   `forecast.py`, entrene con toda la historia y escriba el pronóstico de los próximos 7 días por
+   tienda × categoría.
+2. **Datos en la nube.** Los datos se leen desde Cloud Storage (ya soportado con `RAW_DATA_URI`)
+   y se validan con los contratos de `contracts.py` antes de entrenar; si fallan, no se publica
+   el pronóstico y se usa el sistema actual como respaldo.
+3. **Un job programado** cada domingo (por ejemplo, un contenedor con `uv.lock` en Cloud Run o
+   Vertex AI) que corra ese comando y entregue la tabla al sistema de reposición.
+4. **Seguimiento y monitoreo.** Cada corrida queda registrada en MLflow; el WAPE y el sesgo
+   semanales por formato y región se comparan contra el sistema actual, con alertas si el
+   modelo deja de ganarle.
+
 ## Cómo correrlo
 
 Los resultados del pronóstico ya vienen en `data/processed/`: basta con preparar el entorno y abrir
@@ -56,9 +80,21 @@ los mismos comandos.
 | Paso | Windows (PowerShell o cmd) | Mac / Linux |
 |---|---|---|
 | Preparar el entorno | `.\make.bat setup` | `make setup` |
-| Correr las 42 pruebas (incluye checksum y contratos de los CSV) | `.\make.bat test-all` | `make test-all` |
-| Regenerar `data/processed/` (opcional, ~30 min) | `.\make.bat forecast` | `make forecast` |
+| Correr las 44 pruebas (incluye checksum y contratos de los CSV) | `.\make.bat test-all` | `make test-all` |
+| Correr el pronóstico completo (opcional, ~30 min) | `.\make.bat forecast` | `make forecast` |
+| Correr el análisis de promociones (~10 s) | `.\make.bat promotions` | `make promotions` |
+| Correr el análisis de potencial de tiendas (~5 s) | `.\make.bat potential` | `make potential` |
 | Re-ejecutar el notebook de EDA (opcional) | `.\make.bat eda` | `make eda` |
+
+**Qué produce cada script.** Los tres leen los CSV crudos y no dependen de ningún notebook.
+
+| Script | Comando directo | Salidas en `data/processed/` | Resumen que imprime |
+|---|---|---|---|
+| Pronóstico | `python -m retail_analytics.pipeline` | `validation_*.csv` (selección y ajuste), `test_predictions.parquet`, `test_model_selection.csv`, `forecast_setup.json`; corridas en MLflow | Avance por etapa y modelo elegido |
+| Promociones | `python -m retail_analytics.analyses promotions` | `promociones_efectos.csv`, `promociones_segmentos.csv` | Efecto en monto vendido: −0.22% (IC 95%: −0.43% a 0.00%) |
+| Potencial | `python -m retail_analytics.analyses potential` | `potencial_oportunidad.csv` | Oportunidad P50 1,707 M MXN · P75 4,420 M MXN · 17 tiendas |
+
+Las pruebas (`test-all`) verifican que los scripts de promociones y potencial reproducen esas cifras.
 
 **3. Abrir los notebooks** con `uv run jupyter lab`, o en VS Code eligiendo el kernel
 **retail-analytics (.venv)**. Cada corrida del pipeline queda registrada en MLflow:
@@ -100,6 +136,7 @@ src/retail_analytics/
   forecast.py           modelos y backtest con origen móvil
   evaluate.py           métricas, impacto en MXN y regla de elección de modelo
   pipeline.py           selección, ajuste y comparación (make forecast) + MLflow
+  analyses.py           promociones y potencial desde la terminal (make promotions / make potential)
   promotions.py         promociones como experimento (efectos fijos, potencia, segmentos)
   potential.py          potencial de tiendas (consulta SQL en DuckDB + regresión)
   viz.py                estilo de gráficas (paleta validada para daltonismo)

@@ -9,8 +9,10 @@ if "%TARGET%"=="test" goto test
 if "%TARGET%"=="test-all" goto test_all
 if "%TARGET%"=="eda" goto eda
 if "%TARGET%"=="forecast" goto forecast
+if "%TARGET%"=="promotions" goto promotions
+if "%TARGET%"=="potential" goto potential
 if "%TARGET%"=="requirements" goto requirements
-echo Uso: .\make.bat [setup ^| test ^| test-all ^| forecast ^| eda ^| lint ^| requirements]
+echo Uso: .\make.bat [setup ^| test ^| test-all ^| forecast ^| promotions ^| potential ^| eda ^| lint ^| requirements]
 exit /b 1
 
 :setup
@@ -42,6 +44,14 @@ exit /b 0
 :forecast
 rem Seleccion, ajuste y comparacion de modelos (aprox. 30 min); resultados en data\processed
 uv run python -m retail_analytics.pipeline || exit /b 1
+exit /b 0
+
+:promotions
+uv run python -m retail_analytics.analyses promotions || exit /b 1
+exit /b 0
+
+:potential
+uv run python -m retail_analytics.analyses potential || exit /b 1
 exit /b 0
 
 :requirements
