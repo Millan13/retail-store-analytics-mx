@@ -109,8 +109,8 @@ Detalle completo en [notebooks/02_pronostico.ipynb](notebooks/02_pronostico.ipyn
   exacta.
 - **Impacto en pesos simulado.** No hay datos de inventario, agotados ni costos: la venta perdida
   y el sobreinventario salen de una política de pedido simplificada, igual para todos los modelos.
-- **Promoción como dato conocido.** Se asume que la promoción está planeada; la selección de
-  variables muestra que no aporta al pronóstico, así que el supuesto no cambia los resultados.
+- **Promoción como dato conocido.** Se asume que la promoción está planeada; en la selección de
+  variables se comprobó que no aporta al pronóstico, así que el supuesto no cambia los resultados.
 
 ## Cómo se operaría
 
