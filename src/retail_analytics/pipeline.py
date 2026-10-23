@@ -129,6 +129,7 @@ def main() -> None:
         df, "lgbm-seleccion", fc.lightgbm, val_origins, feature_columns(kept), cfg, "ablation"
     )
     reduced_wape = ev.wape(*_yy(reduced))
+    candidate = list(kept)
     if not kept or reduced_wape > full_wape + MIN_GAIN:
         log.info(
             "Reduced set worse than full (%.4f vs %.4f): keeping all groups",
@@ -139,9 +140,13 @@ def main() -> None:
     features = feature_columns(kept)
     pd.DataFrame(
         {
-            "conjunto": ["completo", "seleccionado"],
-            "wape": [full_wape, reduced_wape],
-            "grupos": [", ".join(FEATURE_GROUPS), ", ".join(kept)],
+            "conjunto": ["completo", "candidato (ablación)", "elegido"],
+            "wape": [
+                full_wape,
+                reduced_wape,
+                full_wape if kept == list(FEATURE_GROUPS) else reduced_wape,
+            ],
+            "grupos": [", ".join(FEATURE_GROUPS), ", ".join(candidate), ", ".join(kept)],
         }
     ).to_csv(out / "validation_selection_check.csv", index=False)
     log.info("Selected groups: %s", kept)
