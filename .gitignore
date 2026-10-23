@@ -13,9 +13,8 @@ htmlcov/
 *.json.key
 credentials*.json
 
-# Datos derivados (se regeneran con `make forecast`)
-data/processed/*
-!data/processed/.gitkeep
+# Los resultados de data/processed/ sí se versionan (son ligeros y evitan correr el pipeline
+# de ~30 min para leer los notebooks); `make forecast` los regenera.
 
 # Seguimiento de experimentos local
 mlruns/

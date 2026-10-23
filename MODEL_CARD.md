@@ -111,11 +111,25 @@ Detalle completo en [notebooks/02_pronostico.ipynb](notebooks/02_pronostico.ipyn
   y el sobreinventario salen de una política de pedido simplificada, igual para todos los modelos.
 - **Promoción como dato conocido.** Se asume que la promoción está planeada; la selección de
   variables muestra que no aporta al pronóstico, así que el supuesto no cambia los resultados.
-- **Monitoreo sugerido.** WAPE y sesgo semanales por formato y región; alerta si el WAPE de dos
-  semanas seguidas supera al del sistema actual o si el sesgo pasa de ±5%.
+
+## Cómo se operaría
+
+Propuesta para pasar del backtest a la operación. Repite lo que se validó; no está implementada
+en el repositorio.
+
+| Tema | Propuesta |
+|---|---|
+| Frecuencia | Una corrida en lote por semana (domingo): pronostica los 7 días siguientes de las 480 series tienda × categoría. |
+| Reentrenamiento | En cada corrida, con ventana creciente, igual que en el backtest. Variables e hiperparámetros se revisan cada trimestre con el mismo procedimiento de validación. |
+| Entrada | Los mismos tres archivos o tablas; se validan con los contratos de `contracts.py` antes de entrenar. |
+| Salida | Pronóstico diario por tienda × categoría que sustituye a la señal de reposición en el cálculo del pedido. El planeador puede ajustarlo en festivos. |
+| Respaldo | Si fallan los contratos o la corrida, se usa el sistema actual (promedio de 7 días sin información futura), que se sigue calculando en paralelo. |
+| Monitoreo | WAPE y sesgo semanales por formato y región frente al sistema actual. Alerta si el WAPE de dos semanas seguidas supera al del sistema actual o si el sesgo pasa de ±5%. |
+| Adopción | Piloto de 90 días con tiendas de control emparejadas por formato y región, midiendo agotados e inventario reales para confirmar el impacto simulado. |
+| Infraestructura | Datos en Cloud Storage (ya soportado con `RAW_DATA_URI`), un job programado que corre el pipeline y MLflow como registro de modelos y métricas. |
 
 ## Reproducibilidad
 
-`make setup && make forecast` regenera todos los resultados (versiones fijadas en `uv.lock`,
+`make setup && make forecast` (en Windows, `.\make.bat setup` y `.\make.bat forecast`) regenera todos los resultados (versiones fijadas en `uv.lock`,
 semilla fija, checksum de los datos crudos). Cada corrida queda registrada en MLflow
 (`mlflow.db`; ver con `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`).

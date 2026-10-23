@@ -1,0 +1,59 @@
+{
+  "feature_groups": [
+    "calendar",
+    "lags",
+    "rolling",
+    "store_traffic",
+    "store",
+    "category",
+    "promotion"
+  ],
+  "features": [
+    "day_of_week",
+    "day_of_month",
+    "month",
+    "is_weekend",
+    "is_payday",
+    "is_holiday",
+    "holiday",
+    "is_buen_fin",
+    "is_navidad_season",
+    "is_semana_santa",
+    "lag_7",
+    "lag_14",
+    "lag_21",
+    "lag_28",
+    "lag_7_was_holiday",
+    "lag_7_was_payday",
+    "roll_mean_7",
+    "roll_mean_28",
+    "roll_median_28",
+    "roll_std_28",
+    "same_weekday_mean_4w",
+    "store_tx_roll_7",
+    "store_format",
+    "region",
+    "socioeconomic_level",
+    "size_sqm",
+    "num_checkouts",
+    "has_pharmacy",
+    "has_fuel_station",
+    "category_code",
+    "has_promotion"
+  ],
+  "best_params": {
+    "poisson_glm": {
+      "alpha": 0.0001
+    },
+    "lightgbm": {
+      "objective": "tweedie",
+      "num_leaves": 31,
+      "n_estimators": 600
+    },
+    "xgboost": {
+      "max_depth": 6,
+      "n_estimators": 600
+    }
+  },
+  "ganador": "lightgbm"
+}
