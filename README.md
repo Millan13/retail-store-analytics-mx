@@ -10,11 +10,14 @@ preguntas de negocio, cada una conectada a una palanca distinta:
 | **¿Qué tiendas venden menos de lo que deberían?** | Crecer | Llevar cada tienda a la mediana de sus pares vale **~1,700 M MXN al año** (+5.7%); 27 tiendas tienen capacidad ociosa y la palanca es comercial |
 | **¿Las promociones funcionan?** | Dejar de gastar | **No mueven la venta**: efecto de −0.2% (IC 95%: −0.4% a 0.0%) en 6,953 M MXN de venta promocionada, sin descuento medible |
 
+**Resultado de la pregunta 2 (potencial de tiendas): dónde está la oportunidad.** Detalle en el
+[notebook 04](notebooks/04_potencial_tiendas.ipynb).
+
+![Oportunidad anual por región si cada tienda alcanza la mediana de su formato](reports/figures/mapa_potencial_regional.png)
+
 Antes de modelar se encontraron **dos campos del sistema que llevan a conclusiones falsas**:
 la señal de reposición usa la venta del día siguiente, y el conteo de transacciones viene inflado
 ~22% en días de promoción. Ambos se corrigen o excluyen en todo el proyecto.
-
-![Oportunidad anual por región si cada tienda alcanza la mediana de su formato](reports/figures/mapa_potencial_regional.png)
 
 ## Cómo navegar el repositorio
 
