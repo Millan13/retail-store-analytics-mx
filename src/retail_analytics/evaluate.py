@@ -110,3 +110,98 @@ def inventory_impact(preds: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFrame:
     week["excess_mxn"] = week["excess_units"] * price
     cols = ["demand", "sales_mxn", "lost_units", "excess_units", "lost_mxn", "excess_mxn"]
     return week.groupby(["model", "origin"], observed=True)[cols].sum().reset_index()
+
+
+# Simplest first: on a practical tie, the earlier model in this list wins.
+COMPLEXITY_ORDER = [
+    "sistema_actual",
+    "naive_estacional",
+    "holt_winters",
+    "poisson_glm",
+    "lightgbm",
+    "xgboost",
+]
+
+
+def bootstrap_wape_diff(
+    preds: pd.DataFrame, model_a: str, model_b: str, n_boot: int = 2000, seed: int = 42
+) -> dict:
+    """Bootstrap CI of ``WAPE(a) - WAPE(b)``, resampling whole stores.
+
+    Series of the same store share shocks, so stores (not rows) are the resampling
+    unit. If the 95% interval contains zero, the two models are a practical tie.
+
+    Parameters
+    ----------
+    preds : pandas.DataFrame
+        Backtest output with ``model``, ``store_id``, ``y_true`` and ``y_pred``.
+    model_a, model_b : str
+        Models to compare.
+    n_boot : int
+        Bootstrap replicates.
+    seed : int
+        Random seed.
+
+    Returns
+    -------
+    dict
+        ``diff`` (point estimate), ``lo`` and ``hi`` (95% CI).
+    """
+    d = preds[preds["model"].isin([model_a, model_b])].dropna(subset=["y_true"])
+    d = d.assign(abs_err=(d["y_pred"] - d["y_true"]).abs())
+    err = d.pivot_table(index="store_id", columns="model", values="abs_err", aggfunc="sum")
+    act = d[d["model"] == model_a].groupby("store_id")["y_true"].sum().reindex(err.index)
+    ea, eb, y = err[model_a].to_numpy(), err[model_b].to_numpy(), act.to_numpy()
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(y), size=(n_boot, len(y)))
+    diffs = (ea[idx].sum(1) - eb[idx].sum(1)) / y[idx].sum(1)
+    return {
+        "diff": float((ea.sum() - eb.sum()) / y.sum()),
+        "lo": float(np.quantile(diffs, 0.025)),
+        "hi": float(np.quantile(diffs, 0.975)),
+    }
+
+
+def choose_model(
+    preds: pd.DataFrame, order: list[str] = COMPLEXITY_ORDER
+) -> tuple[str, pd.DataFrame]:
+    """Apply the selection rule fixed before looking at the test weeks.
+
+    1. Take the model with the lowest test WAPE.
+    2. Compare it with every simpler model; if a simpler model is a practical tie
+       (bootstrap CI of the WAPE difference contains zero), the simplest tied model wins.
+
+    Parameters
+    ----------
+    preds : pandas.DataFrame
+        Backtest output for every model on the test origins.
+    order : list of str
+        Models from simplest to most complex.
+
+    Returns
+    -------
+    tuple
+        Chosen model name and the comparison table against the best model.
+    """
+    wapes = score(preds, by=["model"])["wape"]
+    best = wapes.idxmin()
+    rows = []
+    for m in order:
+        if m not in wapes.index:
+            continue
+        cmp = (
+            bootstrap_wape_diff(preds, m, best)
+            if m != best
+            else {"diff": 0.0, "lo": 0.0, "hi": 0.0}
+        )
+        rows.append(
+            {
+                "model": m,
+                "wape": wapes[m],
+                **cmp,
+                "empate_con_mejor": m == best or cmp["lo"] <= 0 <= cmp["hi"],
+            }
+        )
+    table = pd.DataFrame(rows).set_index("model")
+    chosen = table.index[table["empate_con_mejor"]][0]
+    return chosen, table

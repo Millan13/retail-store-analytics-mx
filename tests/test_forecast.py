@@ -215,3 +215,30 @@ def test_inventory_impact_lost_and_excess():
     # S1 ordered 10 for a demand of 20 -> 10 lost; S2 ordered 30 for 20 -> 10 excess.
     assert out["lost_units"] == 10 and out["excess_units"] == 10
     assert out["lost_mxn"] == 20 and out["excess_mxn"] == 20
+
+
+def _preds(errors: dict[str, float], n_stores: int = 40, seed: int = 0) -> pd.DataFrame:
+    rng = np.random.default_rng(seed)
+    rows = []
+    for s in range(n_stores):
+        y = rng.uniform(50, 150, 30)
+        for m, e in errors.items():
+            noise = rng.normal(0, e, 30) * y
+            rows.append(
+                pd.DataFrame({"model": m, "store_id": f"S{s}", "y_true": y, "y_pred": y + noise})
+            )
+    return pd.concat(rows, ignore_index=True)
+
+
+def test_choose_model_prefers_simpler_model_on_a_tie():
+    # Same error level -> statistical tie -> the simpler model (poisson_glm) wins.
+    preds = _preds({"poisson_glm": 0.20, "lightgbm": 0.20})
+    chosen, table = ev.choose_model(preds)
+    assert chosen == "poisson_glm"
+    assert table.loc["poisson_glm", "empate_con_mejor"]
+
+
+def test_choose_model_keeps_clearly_better_complex_model():
+    preds = _preds({"poisson_glm": 0.30, "lightgbm": 0.15})
+    chosen, _ = ev.choose_model(preds)
+    assert chosen == "lightgbm"
