@@ -64,6 +64,12 @@ decisión o conclusión. La lógica vive en `src/retail_analytics/` y tiene prue
 > Vertex AI Pipeline, con `make forecast` para reentrenar y reelegir el modelo cada trimestre);
 > MLflow pasaría a un servidor compartido, y el pronóstico se escribiría en BigQuery para el
 > sistema de reposición y el tablero de monitoreo.
+>
+> El código ya trae la opción de leer los datos crudos desde un bucket: si se define la variable
+> de entorno `RAW_DATA_URI=gs://<bucket>/<ruta>` (ver `.env.example`) y se instala el extra
+> `uv sync --extra gcs`, todos los scripts leen de ahí en lugar de `data/raw/`, sin cambiar
+> código. Las credenciales se pasan solo por variables de entorno. Esta opción no se probó contra
+> un bucket real (el caso no incluye una cuenta de GCP).
 
 ## Cómo correrlo
 
