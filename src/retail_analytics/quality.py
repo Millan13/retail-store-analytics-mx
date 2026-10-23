@@ -143,20 +143,24 @@ def accounting_identities(tx: pd.DataFrame, tol: float = 0.01) -> pd.DataFrame:
     pandas.DataFrame
         % de filas evaluables donde se cumple cada identidad, con y sin promoción.
     """
+
+    def close(diff: pd.Series, tolerance: float) -> pd.Series:
+        # Nulo si no hay con qué comparar: una fila sin efectivo no "incumple", no es evaluable.
+        return (diff.abs() < tolerance).astype("boolean").mask(diff.isna())
+
     d = tx.copy()
     paid = d["cash_transactions"] + d["card_transactions"]
     checks = {
         "total_tx = efectivo + tarjeta": d["total_transactions"] == paid,
-        "monto = efectivo + tarjeta": (
-            d["amount_total"] - d["amount_cash"] - d["amount_card"]
-        ).abs()
-        < tol,
-        "ticket = monto / total_tx": (
-            d["avg_ticket"] - d["amount_total"] / d["total_transactions"]
-        ).abs()
-        < tol,
-        "ticket = monto / (efectivo + tarjeta)": (d["avg_ticket"] - d["amount_total"] / paid).abs()
-        < tol + 0.005,
+        "monto = efectivo + tarjeta": close(
+            d["amount_total"] - d["amount_cash"] - d["amount_card"], tol
+        ),
+        "ticket = monto / total_tx": close(
+            d["avg_ticket"] - d["amount_total"] / d["total_transactions"].astype(float), tol
+        ),
+        "ticket = monto / (efectivo + tarjeta)": close(
+            d["avg_ticket"] - d["amount_total"] / paid.astype(float), tol + 0.005
+        ),
     }
     rows = []
     for name, ok in checks.items():

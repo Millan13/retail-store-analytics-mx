@@ -7,6 +7,7 @@ los colores siguen a la entidad, nunca a su posición en un ranking.
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.ticker import FuncFormatter
 
 SURFACE = "#fcfcfb"
@@ -31,7 +32,8 @@ REGION_COLORS = dict(zip(REGION_ORDER, SERIES, strict=False))
 
 
 def set_style() -> None:
-    """Aplica el estilo base de matplotlib (fondo, tipografía, ejes y rejilla discretos)."""
+    """Aplica el tema de seaborn con la paleta del proyecto (fondo, tipografía y rejilla discretos)."""
+    sns.set_theme(context="notebook", style="whitegrid", palette=SERIES, font_scale=0.95)
     plt.rcParams.update(
         {
             "figure.facecolor": SURFACE,
@@ -108,7 +110,9 @@ def subtitle(ax, text: str) -> None:
     ax : matplotlib.axes.Axes
     text : str
     """
-    ax.text(0, 1.02, text, transform=ax.transAxes, color=INK_2, fontsize=9, va="bottom")
+    # Sube el título para dejar espacio a la línea gris debajo de él.
+    ax.set_title(ax.get_title(loc="left"), loc="left", pad=20)
+    ax.text(0, 1.015, text, transform=ax.transAxes, color=INK_2, fontsize=9, va="bottom")
 
 
 def save(fig, name: str) -> None:
