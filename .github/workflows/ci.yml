@@ -12,9 +12,26 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         with:
           version: "latest"
+      - name: requirements.txt coincide con uv.lock
+        run: |
+          uv export --format requirements-txt --no-hashes --all-groups --no-emit-project --quiet -o /tmp/req.txt
+          diff <(grep -v '^#' requirements.txt) <(grep -v '^#' /tmp/req.txt)
       - name: Instalar dependencias
         run: uv sync --all-groups --python 3.12
       - name: Lint
-        run: uv run ruff check src tests
+        run: uv run ruff check src tests notebooks
       - name: Tests (incluye integridad de los datos crudos)
         run: uv run pytest
+
+  # Comprueba que las instrucciones de Windows funcionan tal como están en el README.
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - name: Entorno con make.bat
+        run: .\make.bat setup
+      - name: Tests con make.bat (incluye integridad de los datos crudos)
+        run: .\make.bat test-all

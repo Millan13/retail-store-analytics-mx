@@ -1,4 +1,4 @@
-.PHONY: setup lint test test-all eda forecast
+.PHONY: setup lint test test-all eda forecast requirements
 
 setup:  ## Crea el entorno con las versiones fijadas en uv.lock
 	uv sync --all-groups
@@ -20,3 +20,6 @@ eda:  ## Re-ejecuta el notebook de EDA en sitio
 
 forecast:  ## Selección, ajuste y comparación de modelos (≈30 min); resultados en data/processed
 	uv run python -m retail_analytics.pipeline
+
+requirements:  ## Regenera requirements.txt (instalación con pip) desde uv.lock
+	uv export --format requirements-txt --no-hashes --all-groups --no-emit-project --quiet -o requirements.txt

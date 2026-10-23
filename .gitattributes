@@ -1,0 +1,5 @@
+# Los datos crudos se versionan byte a byte: si git cambiara sus fines de línea (por ejemplo en
+# Windows) el checksum de MANIFEST.sha256 dejaría de coincidir.
+data/raw/* -text
+# cmd.exe necesita fines de línea CRLF en los .bat
+*.bat text eol=crlf
