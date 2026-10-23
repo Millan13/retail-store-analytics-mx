@@ -2,6 +2,7 @@
 
 setup:  ## Crea el entorno con las versiones fijadas en uv.lock
 	uv sync --all-groups
+	uv run python -m ipykernel install --sys-prefix --name retail-analytics --display-name "retail-analytics (.venv)"
 	uv run pre-commit install
 
 lint:

@@ -9,7 +9,7 @@ Análisis de operaciones de una cadena de retail con 80 tiendas en 5 regiones de
    (escenarios P50/P75), con vista regional.
 3. **¿Las promociones funcionan?** Evaluación de las promociones como experimento.
 
-> 🚧 En construcción. Estado actual: estructura del repo + análisis exploratorio
+> En construcción. Estado actual: estructura del repo + análisis exploratorio
 > ([notebooks/01_eda.ipynb](notebooks/01_eda.ipynb)).
 
 ## Cómo correrlo
