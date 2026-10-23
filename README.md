@@ -10,7 +10,7 @@ preguntas de negocio, cada una conectada a una palanca distinta:
 | **¿Qué tiendas venden menos de lo que deberían?** | Crecer | Llevar cada tienda a la mediana de sus pares vale **~1,700 M MXN al año** (+5.7%); 27 tiendas tienen capacidad ociosa y la palanca es comercial |
 | **¿Las promociones funcionan?** | Dejar de gastar | **No mueven la venta**: efecto de −0.2% (IC 95%: −0.4% a 0.0%) en 6,953 M MXN de venta promocionada, sin descuento medible |
 
-Antes de modelar, el análisis encontró **dos campos del sistema que llevan a conclusiones falsas**:
+Antes de modelar se encontraron **dos campos del sistema que llevan a conclusiones falsas**:
 la señal de reposición usa la venta del día siguiente, y el conteo de transacciones viene inflado
 ~22% en días de promoción. Ambos se corrigen o excluyen en todo el proyecto.
 
@@ -18,7 +18,7 @@ la señal de reposición usa la venta del día siguiente, y el conteo de transac
 
 ## Cómo navegar el repositorio
 
-| Si quieres... | Ve a |
+| Para... | Consultar |
 |---|---|
 | Ver la historia completa en 20 minutos | [reports/presentacion_ejecutiva.pdf](reports/presentacion_ejecutiva.pdf) |
 | Entender los datos y cómo se definió el problema | [notebooks/01_eda.ipynb](notebooks/01_eda.ipynb) |
