@@ -104,6 +104,19 @@ def tune(df, origins, features, cfg) -> tuple[dict, pd.DataFrame]:
     return best, pd.DataFrame(results)
 
 
+def select_winner(out) -> str:
+    """Apply the model-selection rule to the saved test predictions and record the result."""
+    preds = pd.read_parquet(out / "test_predictions.parquet")
+    chosen, table = ev.choose_model(preds)
+    table.to_csv(out / "test_model_selection.csv")
+    setup_path = out / "forecast_setup.json"
+    setup = json.loads(setup_path.read_text(encoding="utf-8"))
+    setup["ganador"] = chosen
+    setup_path.write_text(json.dumps(setup, indent=2), encoding="utf-8")
+    log.info("Chosen model: %s", chosen)
+    return chosen
+
+
 def main() -> None:
     """Run the full protocol and save the outputs used by ``02_pronostico.ipynb``."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
@@ -181,8 +194,17 @@ def main() -> None:
         json.dumps({"feature_groups": kept, "features": features, "best_params": best}, indent=2),
         encoding="utf-8",
     )
+    select_winner(out)
     log.info("Done. Outputs in %s", out)
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "--select-only" in sys.argv:
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S"
+        )
+        select_winner(project_path("processed"))
+    else:
+        main()
