@@ -13,6 +13,7 @@ documented state-to-region mapping (``REGION_STATES``).
 
 from __future__ import annotations
 
+import duckdb
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
@@ -45,6 +46,28 @@ REGION_STATES: dict[str, list[str]] = {
     "Sur": ["Guerrero", "Oaxaca", "Chiapas", "Tabasco", "Campeche", "Yucatán", "Quintana Roo"],
 }
 
+# Two-level aggregation: first total the 6 categories per store-day, then average the
+# days. Averaging rows directly would mix category-days with store-days.
+STORE_DAILY_SQL = """
+WITH daily AS (
+    SELECT store_id,
+           date,
+           SUM(amount_total)       AS sales,
+           SUM(units_sold)         AS units,
+           SUM(transactions_clean) AS tx
+    FROM panel
+    WHERE NOT is_missing_row
+    GROUP BY store_id, date
+)
+SELECT store_id,
+       AVG(sales) AS daily_sales,
+       AVG(units) AS daily_units,
+       AVG(tx)    AS daily_tx
+FROM daily
+GROUP BY store_id
+ORDER BY store_id
+"""
+
 FORMULA = (
     "np.log(daily_sales) ~ C(store_format, Treatment('Bodega')) + C(region, Treatment('Centro'))"
     " + C(socioeconomic_level, Treatment('C')) + np.log(size_sqm)"
@@ -65,13 +88,10 @@ def store_table(panel: pd.DataFrame) -> pd.DataFrame:
         Store attributes plus average daily sales (all categories), average daily
         units, annualized sales and average daily transactions per checkout.
     """
-    real = panel[~panel["is_missing_row"]]
-    daily = real.groupby(["store_id", "date"], observed=True).agg(
-        sales=("amount_total", "sum"), units=("units_sold", "sum"), tx=("transactions_clean", "sum")
-    )
-    per_store = daily.groupby("store_id").agg(
-        daily_sales=("sales", "mean"), daily_units=("units", "mean"), daily_tx=("tx", "mean")
-    )
+    facts = panel[
+        ["store_id", "date", "is_missing_row", "amount_total", "units_sold", "transactions_clean"]
+    ]
+    per_store = duckdb.query_df(facts, "panel", STORE_DAILY_SQL).df().set_index("store_id")
     attrs = panel.drop_duplicates("store_id").set_index("store_id")[
         [
             "store_format",
