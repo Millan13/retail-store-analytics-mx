@@ -114,8 +114,9 @@ Detalle completo en [notebooks/02_pronostico.ipynb](notebooks/02_pronostico.ipyn
 
 ## Cómo se operaría
 
-Propuesta para pasar del backtest a la operación. Repite lo que se validó; no está implementada
-en el repositorio.
+Propuesta para pasar del backtest a la operación. Repite lo que se validó. El comando de
+predicción ya existe (`make predict`, `predict.py`); el job programado, el monitoreo y el piloto
+son la propuesta.
 
 | Tema | Propuesta |
 |---|---|

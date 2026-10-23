@@ -41,20 +41,24 @@ decisión o conclusión. La lógica vive en `src/retail_analytics/` y tiene prue
 |---|---|---|
 | Para qué | Ver el análisis: gráficas, tablas y conclusiones | Correr el análisis sin intervención; es el código que se llevaría a producción |
 | Contienen lógica | No: importan las funciones de los scripts | Sí: limpieza, variables, modelos, métricas y análisis, con docstrings y pruebas |
-| Cómo se corren | Jupyter o VS Code | Terminal: `make forecast`, `make promotions`, `make potential` |
+| Cómo se corren | Jupyter o VS Code | Terminal: `make forecast`, `make predict`, `make promotions`, `make potential` |
 
 **Cómo se llevaría el pronóstico a producción.** La propuesta completa está en
 [MODEL_CARD.md](MODEL_CARD.md#cómo-se-operaría). En resumen:
 
-1. **Un comando de predicción semanal.** Hoy `pipeline.py` evalúa el modelo en el histórico
-   (backtest). El paso que falta es un comando que, con las mismas funciones de `features.py` y
-   `forecast.py`, entrene con toda la historia y escriba el pronóstico de los próximos 7 días por
-   tienda × categoría.
+1. **Un comando de predicción semanal (ya incluido: `make predict`).** `pipeline.py` evalúa y
+   elige el modelo en el histórico; `predict.py` entrena ese modelo con toda la historia y escribe
+   el pronóstico de los próximos 7 días por tienda × categoría. Usa las mismas funciones que el
+   backtest; una prueba verifica que, con los datos cortados en una semana de prueba, reproduce el
+   pronóstico del backtest. El calendario futuro (quincenas, festivos de fecha fija, lunes de la
+   Ley Federal del Trabajo, Semana Santa y Buen Fin) se genera con reglas que reproducen las 425
+   fechas del calendario real.
 2. **Datos en la nube.** Los datos se leen desde Cloud Storage (ya soportado con `RAW_DATA_URI`)
    y se validan con los contratos de `contracts.py` antes de entrenar; si fallan, no se publica
    el pronóstico y se usa el sistema actual como respaldo.
 3. **Un job programado** cada domingo (por ejemplo, un contenedor con `uv.lock` en Cloud Run o
-   Vertex AI) que corra ese comando y entregue la tabla al sistema de reposición.
+   Vertex AI) que corra `make predict` y entregue la tabla al sistema de reposición. Este paso y
+   el siguiente son la propuesta; no están implementados en el repositorio.
 4. **Seguimiento y monitoreo.** Cada corrida queda registrada en MLflow; el WAPE y el sesgo
    semanales por formato y región se comparan contra el sistema actual, con alertas si el
    modelo deja de ganarle.
@@ -83,21 +87,23 @@ los mismos comandos.
 | Paso | Windows (PowerShell o cmd) | Mac / Linux |
 |---|---|---|
 | Preparar el entorno | `.\make.bat setup` | `make setup` |
-| Correr las 44 pruebas (incluye checksum y contratos de los CSV) | `.\make.bat test-all` | `make test-all` |
+| Correr las 48 pruebas (incluye checksum y contratos de los CSV) | `.\make.bat test-all` | `make test-all` |
 | Correr el pronóstico completo (opcional, ~30 min) | `.\make.bat forecast` | `make forecast` |
+| Pronosticar los próximos 7 días (~10 s) | `.\make.bat predict` | `make predict` |
 | Correr el análisis de promociones (~10 s) | `.\make.bat promotions` | `make promotions` |
 | Correr el análisis de potencial de tiendas (~5 s) | `.\make.bat potential` | `make potential` |
 | Re-ejecutar el notebook de EDA (opcional) | `.\make.bat eda` | `make eda` |
 
-**Qué produce cada script.** Los tres leen los CSV crudos y no dependen de ningún notebook.
+**Qué produce cada script.** Todos leen los CSV crudos y no dependen de ningún notebook.
 
 | Script | Comando directo | Salidas en `data/processed/` | Resumen que imprime |
 |---|---|---|---|
 | Pronóstico | `python -m retail_analytics.pipeline` | `validation_*.csv` (selección y ajuste), `test_predictions.parquet`, `test_model_selection.csv`, `forecast_setup.json`; corridas en MLflow | Avance por etapa y modelo elegido |
+| Predicción | `python -m retail_analytics.predict` | `pronostico_proxima_semana.csv` (tienda, categoría, fecha, unidades) | Fechas pronosticadas y total de unidades: 1 al 7 de marzo de 2024, 3.46 M (última semana real: 3.42 M) |
 | Promociones | `python -m retail_analytics.analyses promotions` | `promociones_efectos.csv`, `promociones_segmentos.csv` | Efecto en monto vendido: −0.22% (IC 95%: −0.43% a 0.00%) |
 | Potencial | `python -m retail_analytics.analyses potential` | `potencial_oportunidad.csv` | Oportunidad P50 1,707 M MXN · P75 4,420 M MXN · 17 tiendas |
 
-Las pruebas (`test-all`) verifican que los scripts de promociones y potencial reproducen esas cifras.
+Las pruebas (`test-all`) verifican que la predicción reproduce el backtest y que los scripts de promociones y potencial reproducen esas cifras. La predicción usa el modelo elegido por el pronóstico (`forecast_setup.json`).
 
 **3. Abrir los notebooks** con `uv run jupyter lab`, o en VS Code eligiendo el kernel
 **retail-analytics (.venv)**. Cada corrida del pipeline queda registrada en MLflow:
@@ -139,6 +145,7 @@ src/retail_analytics/
   forecast.py           modelos y backtest con origen móvil
   evaluate.py           métricas, impacto en MXN y regla de elección de modelo
   pipeline.py           selección, ajuste y comparación (make forecast) + MLflow
+  predict.py            pronóstico de los próximos 7 días con el modelo elegido (make predict)
   analyses.py           promociones y potencial desde la terminal (make promotions / make potential)
   promotions.py         promociones como experimento (efectos fijos, potencia, segmentos)
   potential.py          potencial de tiendas (consulta SQL en DuckDB + regresión)
