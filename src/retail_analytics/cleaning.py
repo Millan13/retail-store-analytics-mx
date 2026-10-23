@@ -57,7 +57,8 @@ def reconstruct_payments(tx: pd.DataFrame) -> pd.DataFrame:
     3. ``ticket``: promotion day with ticket available -> ``amount / ticket - card``
        (exact in 100% of checkable rows; ``total`` is inflated on promotion days).
     4. ``estimated``: promotion day without ticket -> ``cash_amount / card_ticket``,
-       assuming the same ticket for cash and card (observed difference +/-5%).
+       assuming the same ticket for cash and card (median ratio 1.00; 90% of rows
+       within +/-8%).
 
     ``amount_cash`` is always deduced as ``amount_total - amount_card``.
 

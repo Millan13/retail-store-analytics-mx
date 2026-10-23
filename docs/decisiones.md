@@ -11,7 +11,7 @@ Cada decisión con su alternativa, la razón y dónde está la evidencia. Ordena
 | D3 | Las 42 filas faltantes se agregan marcadas y sin rellenar | Rellenar con ceros o interpolar | No sabemos si la tienda abrió; un cero inventa una caída de demanda | EDA §2; `cleaning.complete_grid` |
 | D4 | Efectivo, monto en efectivo y ticket se reconstruyen por identidad contable | Imputar con medianas o modelos | Las identidades se cumplen en el 100% de las filas comprobables; la reconstrucción se validó borrando y recuperando 5,000 valores (100% exacto) | EDA §6 |
 | D5 | `units_sold` no se imputa en la limpieza | Imputar en la limpieza | Cualquier imputación que aprenda de los datos filtraría información del periodo de prueba; LightGBM y XGBoost manejan nulos de forma nativa y el GLM imputa dentro de su pipeline con datos de entrenamiento | `cleaning.py` (docstring); `forecast.poisson_glm` |
-| D6 | Los picos de eventos no se tratan como outliers | Recortarlos o eliminarlos | El 99% de los valores extremos cae en fechas de evento (Buen Fin, Navidad, Año Nuevo): son demanda real | EDA §12 |
+| D6 | Los picos de eventos no se tratan como outliers | Recortarlos o eliminarlos | El 99% de los valores extremos cae en festivos o en la temporada navideña: son demanda real | EDA §12 |
 | D7 | No se construye un análisis de interacciones entre categorías | Analizar complementos y sustitutos | Tienda × categoría explica 0.02% de la varianza; sin el efecto común de afluencia, la correlación entre categorías es la de ruido puro | EDA §10 |
 
 ## Pronóstico
@@ -39,7 +39,7 @@ Cada decisión con su alternativa, la razón y dónde está la evidencia. Ordena
 | P1 | Tratar la promoción como experimento natural | Modelo observacional con controles | La asignación es pareja en todos los cortes y la prueba A/A (venta de la semana previa) sale limpia (p = 0.95) | Notebook 03 §2 |
 | P2 | Estimador de efectos fijos (tienda × categoría × mes, día, festivo) con errores agrupados por tienda | Promedio de cocientes por celda (usado en la vista preliminar del EDA) | El promedio de cocientes con pocas promociones por celda se sesga hacia arriba (desigualdad de Jensen): daba +0.6% en monto; el estimador correcto da −0.2% (IC −0.4% a 0.0%) | Notebook 03 §3; `tests/test_promotions.py` recupera un efecto conocido de +10% |
 | P3 | Reportar el efecto mínimo detectable | Solo decir "no es significativo" | Un resultado nulo solo es informativo si el análisis tenía potencia: aquí detectaría efectos desde 0.3% | Notebook 03 §4 |
-| P4 | Corrección Benjamini-Hochberg en el análisis por segmento | Reportar p-valores sin corregir | Con 24 segmentos, uno o dos salen significativos por azar (p. ej. A/B con p = 0.017, ajustado 0.19) | Notebook 03 §5 |
+| P4 | Corrección Benjamini-Hochberg en el análisis por segmento | Reportar p-valores sin corregir | Con 24 segmentos, 4 salen con p < 0.05 sin corregir (p. ej. Electrónica p = 0.004, A/B p = 0.017); ninguno sobrevive a la corrección (menor p ajustado 0.095) | Notebook 03 §5 |
 
 ## Potencial de tiendas
 
@@ -54,7 +54,7 @@ Cada decisión con su alternativa, la razón y dónde está la evidencia. Ordena
 
 | # | Decisión | Por qué |
 |---|---|---|
-| E1 | Paleta del kit visual: fondo blanco, texto Bentonville, True Blue principal, amarillo solo de acento | Reglas explícitas del kit |
+| E1 | Paleta del kit visual de la cadena: fondo blanco, texto azul oscuro, azul primario para los datos, amarillo solo de acento | Reglas explícitas del kit |
 | E2 | Bodega usa una tinta oscura de su amarillo (`#E0A100`) en lugar del verde del kit | Los dos verdes del kit (Bodega y Express) no pasan el piso de distinción con visión normal (ΔE 11.2 < 15) en el validador de dataviz; la paleta final pasa en todos los pares |
 | E3 | Gráficas en seaborn (estáticas) en los notebooks; HTML interactivo solo para el mapa | GitHub no muestra gráficas interactivas dentro de un notebook |
 | E4 | Código, docstrings y comentarios en inglés; notebooks y documentos en español | Estándar del repo: el código usa nombres en inglés; la audiencia de negocio lee español |

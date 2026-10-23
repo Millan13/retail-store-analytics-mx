@@ -13,7 +13,7 @@ htmlcov/
 *.json.key
 credentials*.json
 
-# Datos derivados (se regeneran con `make data`)
+# Datos derivados (se regeneran con `make forecast`)
 data/processed/*
 !data/processed/.gitkeep
 

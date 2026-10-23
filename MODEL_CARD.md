@@ -81,9 +81,10 @@ Detalle completo en [notebooks/02_pronostico.ipynb](notebooks/02_pronostico.ipyn
 - **Eventos sin historia.** Los datos empiezan en enero de 2023: el Buen Fin y la Navidad de 2023
   son los primeros. Ningún modelo pudo aprenderlos. Con un año más de datos, un rezago de 364 días
   los capturaría; mientras tanto, esas semanas requieren un ajuste manual del planeador.
-- **Ruido diario irreducible.** Aun conociendo el patrón real de cada serie, el error en días
-  normales sería ~18–21% (notebook 02 §8). El modelo debe usarse junto con inventario de
-  seguridad, no como cifra exacta.
+- **Ruido diario irreducible.** Aun conociendo de antemano el perfil real de cada serie, el error
+  en días normales sería ~27%, y ~18% si además se conociera la afluencia real de cada tienda ese
+  día (notebook 02 §8). El modelo debe usarse junto con inventario de seguridad, no como cifra
+  exacta.
 - **Impacto en pesos simulado.** No hay datos de inventario, agotados ni costos: la venta perdida
   y el sobreinventario salen de una política de pedido simplificada, igual para todos los modelos.
 - **Promoción como dato conocido.** Se asume que la promoción está planeada; la selección de

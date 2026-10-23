@@ -18,5 +18,5 @@ test-all:  ## Incluye los tests que leen los CSV reales
 eda:  ## Re-ejecuta el notebook de EDA en sitio
 	uv run jupyter nbconvert --to notebook --execute --inplace notebooks/01_eda.ipynb
 
-forecast:  ## Selección, ajuste y comparación de modelos (≈15 min); resultados en data/processed
+forecast:  ## Selección, ajuste y comparación de modelos (≈30 min); resultados en data/processed
 	uv run python -m retail_analytics.pipeline
