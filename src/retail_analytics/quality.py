@@ -1,7 +1,8 @@
-"""Diagnósticos de calidad de datos usados en el EDA.
+"""Data-quality diagnostics used in the EDA.
 
-Cada función devuelve una tabla pequeña y legible en vez de imprimir, para que el
-notebook solo muestre resultados y los tests puedan verificar los mismos números.
+Each function returns a small, readable table instead of printing, so the notebook
+only displays results and the tests can assert on the same numbers. Column labels
+of the returned tables are in Spanish because they are shown to business readers.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ PANEL_KEYS = ["date", "store_id", "category"]
 
 
 def missing_summary(df: pd.DataFrame) -> pd.DataFrame:
-    """Conteo y porcentaje de nulos por columna, solo columnas con algún nulo.
+    """Count nulls per column (absolute and %), only for columns with any null.
 
     Parameters
     ----------
@@ -23,7 +24,7 @@ def missing_summary(df: pd.DataFrame) -> pd.DataFrame:
     Returns
     -------
     pandas.DataFrame
-        Columnas ``nulos`` y ``pct``, ordenado de mayor a menor.
+        Columns ``nulos`` and ``pct``, sorted descending.
     """
     n = df.isna().sum()
     out = pd.DataFrame({"nulos": n, "pct": (n / len(df) * 100).round(2)})
@@ -31,18 +32,18 @@ def missing_summary(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def null_patterns(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
-    """Combinaciones de nulos que aparecen juntas (qué columnas fallan a la vez).
+    """Find null combinations that occur together (columns that fail at the same time).
 
     Parameters
     ----------
     df : pandas.DataFrame
     cols : list of str
-        Columnas con nulos a cruzar.
+        Columns with nulls to cross.
 
     Returns
     -------
     pandas.DataFrame
-        Una fila por patrón, con ``x`` donde la columna es nula, y el número de filas.
+        One row per pattern, ``x`` where the column is null, plus the row count.
     """
     pat = df[cols].isna()
     counts = pat.value_counts().rename("filas").reset_index()
@@ -51,25 +52,25 @@ def null_patterns(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def missingness_tests(df: pd.DataFrame, col: str, by: list[str]) -> pd.DataFrame:
-    """Prueba chi-cuadrada de independencia entre "es nulo" y cada variable de ``by``.
+    """Chi-square independence test between "is null" and each variable in ``by``.
 
-    Si los nulos fueran por fallas aleatorias de los POS (MCAR), la tasa de nulos
-    no debería depender del día, la tienda o la promoción. Un p-valor alto es
-    consistente con esa hipótesis (no la prueba, pero la falta de dependencia es
-    lo que necesitamos para no sesgar al imputar o descartar).
+    If nulls come from random POS failures (MCAR), the null rate should not depend
+    on the day, the store or the promotion. A high p-value is consistent with that
+    hypothesis; it does not prove it, but the absence of dependence is what we need
+    so that dropping or reconstructing values does not bias results.
 
     Parameters
     ----------
     df : pandas.DataFrame
     col : str
-        Columna con nulos.
+        Column with nulls.
     by : list of str
-        Variables categóricas contra las cuales probar.
+        Categorical variables to test against.
 
     Returns
     -------
     pandas.DataFrame
-        Estadístico, grados de libertad, p-valor y rango de la tasa de nulos por grupo.
+        Statistic, degrees of freedom, p-value and range of the null rate by group.
     """
     rows = []
     is_null = df[col].isna()
@@ -92,7 +93,7 @@ def missingness_tests(df: pd.DataFrame, col: str, by: list[str]) -> pd.DataFrame
 
 
 def grid_gaps(tx: pd.DataFrame, stores: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFrame:
-    """Filas que faltan respecto a la malla completa fecha × tienda × categoría.
+    """List the rows missing from the full date x store x category grid.
 
     Parameters
     ----------
@@ -101,7 +102,7 @@ def grid_gaps(tx: pd.DataFrame, stores: pd.DataFrame, calendar: pd.DataFrame) ->
     Returns
     -------
     pandas.DataFrame
-        Por tienda: primera y última fecha faltante, días y filas faltantes.
+        Per store: first and last missing date, missing days and missing rows.
     """
     grid = pd.MultiIndex.from_product(
         [calendar["date"], stores["store_id"].astype("string"), tx["category"].unique()],
@@ -122,9 +123,9 @@ def grid_gaps(tx: pd.DataFrame, stores: pd.DataFrame, calendar: pd.DataFrame) ->
 
 
 def accounting_identities(tx: pd.DataFrame, tol: float = 0.01) -> pd.DataFrame:
-    """Verifica las identidades contables del archivo, separando días con y sin promoción.
+    """Check the accounting identities of the file, split by promotion / no promotion.
 
-    Identidades revisadas:
+    Identities checked:
 
     - ``total_transactions = cash_transactions + card_transactions``
     - ``amount_total = amount_cash + amount_card``
@@ -134,18 +135,18 @@ def accounting_identities(tx: pd.DataFrame, tol: float = 0.01) -> pd.DataFrame:
     Parameters
     ----------
     tx : pandas.DataFrame
-        Transacciones crudas.
+        Raw transactions.
     tol : float
-        Tolerancia absoluta (MXN) para comparar montos y tickets.
+        Absolute tolerance (MXN) when comparing amounts and tickets.
 
     Returns
     -------
     pandas.DataFrame
-        % de filas evaluables donde se cumple cada identidad, con y sin promoción.
+        % of evaluable rows where each identity holds, with and without promotion.
     """
 
     def close(diff: pd.Series, tolerance: float) -> pd.Series:
-        # Nulo si no hay con qué comparar: una fila sin efectivo no "incumple", no es evaluable.
+        # Null when there is nothing to compare: a row without cash does not "fail", it is not evaluable.
         return (diff.abs() < tolerance).astype("boolean").mask(diff.isna())
 
     d = tx.copy()
@@ -179,7 +180,7 @@ def accounting_identities(tx: pd.DataFrame, tol: float = 0.01) -> pd.DataFrame:
 
 
 def phantom_transactions(tx: pd.DataFrame) -> pd.Series:
-    """Transacciones reportadas que no tienen medio de pago: ``total - (efectivo + tarjeta)``.
+    """Compute reported transactions without a payment method: ``total - (cash + card)``.
 
     Parameters
     ----------
@@ -188,7 +189,7 @@ def phantom_transactions(tx: pd.DataFrame) -> pd.Series:
     Returns
     -------
     pandas.Series
-        Diferencia por fila (nula si falta el efectivo).
+        Difference per row (null when cash is missing).
     """
     return tx["total_transactions"] - tx["cash_transactions"] - tx["card_transactions"]
 
@@ -196,31 +197,31 @@ def phantom_transactions(tx: pd.DataFrame) -> pd.Series:
 def replenishment_window_check(
     tx: pd.DataFrame, window: int = 7, tol: float = 0.01
 ) -> pd.DataFrame:
-    """Prueba qué ventana de ``total_transactions`` reproduce ``replenishment_signal``.
+    """Find which window of ``total_transactions`` reproduces ``replenishment_signal``.
 
-    Se comparan promedios móviles de ``window`` días que terminan en distintos días
-    relativos a ``t``. Si la ventana que reproduce la señal termina después de ``t``,
-    la señal usa información que no existía al momento de calcularla.
+    Moving averages of ``window`` days ending on different days relative to ``t`` are
+    compared against the signal. If the matching window ends after ``t``, the signal
+    uses information that did not exist when it was computed.
 
     Parameters
     ----------
     tx : pandas.DataFrame
-        Transacciones crudas.
+        Raw transactions.
     window : int
-        Días del promedio móvil.
+        Length of the moving average, in days.
     tol : float
-        Tolerancia absoluta para considerar coincidencia exacta.
+        Absolute tolerance to count a row as an exact match.
 
     Returns
     -------
     pandas.DataFrame
-        Por ventana candidata: % de coincidencia exacta y error absoluto mediano.
+        Per candidate window: % of exact matches and median absolute error.
     """
     d = tx.sort_values(["store_id", "category", "date"])
     g = d.groupby(["store_id", "category"])["total_transactions"]
     rows = []
     for end in (-1, 0, 1, 2):
-        # end = días después de t en que termina la ventana (end=1 -> incluye t+1)
+        # end = days after t where the window ends (end=1 -> includes t+1)
         est = g.transform(
             lambda s, e=end: s.astype(float).shift(-e).rolling(window, min_periods=1).mean()
         )
@@ -239,13 +240,13 @@ def replenishment_window_check(
 
 
 def ratio_to_baseline(values: pd.Series, groups: list[pd.Series]) -> pd.Series:
-    """Valor dividido entre la mediana de su grupo (para ubicar picos y caídas).
+    """Divide each value by the median of its group (to spot peaks and drops).
 
     Parameters
     ----------
     values : pandas.Series
     groups : list of pandas.Series
-        Llaves de agrupación alineadas con ``values``.
+        Grouping keys aligned with ``values``.
 
     Returns
     -------
@@ -255,26 +256,26 @@ def ratio_to_baseline(values: pd.Series, groups: list[pd.Series]) -> pd.Series:
 
 
 def within_cell_lift(df: pd.DataFrame, value: str, flag: str, cell: list[str]) -> pd.Series:
-    """Efecto relativo de una bandera comparando dentro de la misma celda.
+    """Estimate the relative effect of a binary flag, comparing within the same cell.
 
-    Para cada celda (por ejemplo tienda × categoría × mes) calcula
-    ``media(valor | bandera=1) / media(valor | bandera=0) - 1``. Comparar dentro de
-    la celda controla nivel de tienda, categoría y estacionalidad sin modelo.
+    For each cell (e.g. store x category x month) computes
+    ``mean(value | flag=1) / mean(value | flag=0) - 1``. Comparing within the cell
+    controls for store level, category and seasonality without a model.
 
     Parameters
     ----------
     df : pandas.DataFrame
     value : str
-        Columna de resultado.
+        Outcome column.
     flag : str
-        Columna binaria (0/1).
+        Binary column (0/1).
     cell : list of str
-        Columnas que definen la celda de comparación.
+        Columns that define the comparison cell.
 
     Returns
     -------
     pandas.Series
-        Un efecto por celda (solo celdas con ambos casos).
+        One effect per cell (only cells with both cases).
     """
     m = df.groupby([*cell, flag], observed=True)[value].mean().unstack(flag)
     return (m[1] / m[0] - 1).dropna()
@@ -283,7 +284,7 @@ def within_cell_lift(df: pd.DataFrame, value: str, flag: str, cell: list[str]) -
 def bootstrap_ci(
     x: pd.Series, n_boot: int = 2000, alpha: float = 0.05, seed: int = 42
 ) -> tuple[float, float, float]:
-    """Media e intervalo de confianza bootstrap percentil.
+    """Compute the mean and a percentile bootstrap confidence interval.
 
     Parameters
     ----------
@@ -295,7 +296,7 @@ def bootstrap_ci(
     Returns
     -------
     tuple of float
-        (media, límite inferior, límite superior).
+        (mean, lower bound, upper bound).
     """
     rng = np.random.default_rng(seed)
     arr = x.dropna().to_numpy()

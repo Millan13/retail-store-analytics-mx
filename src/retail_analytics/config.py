@@ -1,4 +1,4 @@
-"""Lectura de la configuración central (configs/config.yaml)."""
+"""Access to the central configuration (configs/config.yaml)."""
 
 from __future__ import annotations
 
@@ -16,33 +16,33 @@ CONFIG_PATH = PROJECT_ROOT / "configs" / "config.yaml"
 
 @lru_cache(maxsize=1)
 def load_config(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
-    """Carga el YAML de configuración.
+    """Load the YAML configuration.
 
     Parameters
     ----------
     path : str or Path, optional
-        Ruta al archivo de configuración. Por defecto ``configs/config.yaml``.
+        Path to the configuration file. Defaults to ``configs/config.yaml``.
 
     Returns
     -------
     dict
-        Configuración como diccionario anidado.
+        Configuration as a nested dictionary.
     """
     with open(path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 
 def raw_data_location() -> str:
-    """Devuelve dónde están los datos crudos: local o en la nube.
+    """Return where the raw data lives: a local folder or a cloud URI.
 
-    La variable de entorno ``RAW_DATA_URI`` (por ejemplo ``gs://bucket/retail/raw``)
-    tiene prioridad sobre ``paths.raw`` del YAML. Así el mismo código corre en la
-    laptop y en un job que lee de GCS sin tocar nada.
+    The ``RAW_DATA_URI`` environment variable (e.g. ``gs://bucket/retail/raw``)
+    takes precedence over ``paths.raw`` in the YAML, so the same code runs on a
+    laptop and in a job that reads from GCS without changes.
 
     Returns
     -------
     str
-        Ruta local absoluta o URI remota, sin diagonal final.
+        Absolute local path or remote URI, without a trailing slash.
     """
     load_dotenv(PROJECT_ROOT / ".env")
     uri = os.getenv("RAW_DATA_URI")
@@ -52,17 +52,17 @@ def raw_data_location() -> str:
 
 
 def project_path(key: str) -> Path:
-    """Ruta absoluta de una carpeta declarada en ``paths`` del YAML.
+    """Return the absolute path of a folder declared under ``paths`` in the YAML.
 
     Parameters
     ----------
     key : str
-        Llave dentro de ``paths`` (``interim``, ``processed``, ``figures``...).
+        Key inside ``paths`` (``processed``, ``figures``...).
 
     Returns
     -------
     Path
-        Carpeta absoluta; se crea si no existe.
+        Absolute folder; created if it does not exist.
     """
     path = PROJECT_ROOT / load_config()["paths"][key]
     path.mkdir(parents=True, exist_ok=True)

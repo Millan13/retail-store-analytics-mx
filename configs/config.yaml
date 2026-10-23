@@ -20,5 +20,24 @@ keys:
 leaky_columns:
   - replenishment_signal       # promedio de total_transactions de t-5 a t+1: incluye el día siguiente
   - total_transactions         # inflada en días con promoción; usar transactions_clean
+  - total_transactions_reported   # el mismo campo, renombrado en el panel limpio
+  - phantom_transactions          # derivada de total_transactions
+  - transactions_clean            # sin rezago es información del mismo día; solo entra rezagada (store_tx_roll_7)
+  - units_sold                    # la variable objetivo; solo entra rezagada
+  - amount_total                  # cualquier medida de venta del mismo día se conoce después del día
+  - amount_cash
+  - amount_card
+  - avg_ticket
+  - cash_transactions
+  - card_transactions
 
 seed: 42
+
+# Pronóstico de demanda (notebooks/02_pronostico.ipynb)
+forecast:
+  target: units_sold
+  horizon: 7                    # días; todas las variables usan rezagos >= horizon
+  train_start: "2023-01-29"     # primer día con 28 días de historia para los rezagos
+  # Cada origen es un domingo: se entrena con datos <= origen y se pronostica lunes a domingo.
+  validation_origins: ["2023-08-27", "2023-10-22"]   # para elegir variables e hiperparámetros
+  test_origins: ["2023-10-29", "2024-02-25"]         # intocables hasta la comparación final

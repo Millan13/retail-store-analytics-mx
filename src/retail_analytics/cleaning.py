@@ -1,12 +1,12 @@
-"""Limpieza del panel de transacciones.
+"""Cleaning of the transactions panel.
 
-Principio: primero se reconstruye lo que es *deducible* (identidades contables
-que se cumplen en el 100% de las filas comprobables) y solo después, y marcado,
-lo que es *estimable*. ``units_sold`` no se imputa aquí: cualquier imputación que
-aprenda de los datos (medianas, modelos) debe ajustarse dentro del pipeline de
-entrenamiento con datos de train, o filtraría información del periodo de prueba.
+Principle: first reconstruct what can be *deduced* (accounting identities that hold
+in 100% of checkable rows), and only then, flagged, what can be *estimated*.
+``units_sold`` is not imputed here: any imputation that learns from the data
+(medians, models) must be fitted inside the training pipeline on training data only,
+otherwise it would leak information from the test period.
 
-Decisiones documentadas en ``notebooks/01_eda.ipynb`` (sección 6).
+Decisions are documented in ``notebooks/01_eda.ipynb`` (section 6).
 """
 
 from __future__ import annotations
@@ -18,23 +18,23 @@ from retail_analytics.quality import PANEL_KEYS
 
 
 def complete_grid(tx: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFrame:
-    """Agrega las filas faltantes de la malla fecha × tienda × categoría.
+    """Add the rows missing from the date x store x category grid.
 
-    Las filas nuevas quedan con métricas nulas y ``is_missing_row=True``. Se
-    marcan en vez de rellenarse porque no sabemos si la tienda abrió ese día;
-    rellenar con cero inventaría una caída de demanda que no ocurrió.
+    New rows keep null metrics and ``is_missing_row=True``. They are flagged instead
+    of filled because we do not know whether the store opened that day; filling with
+    zeros would invent a demand drop that never happened.
 
     Parameters
     ----------
     tx : pandas.DataFrame
-        Transacciones crudas.
+        Raw transactions.
     calendar : pandas.DataFrame
-        Calendario con todas las fechas del periodo.
+        Calendar with every date of the period.
 
     Returns
     -------
     pandas.DataFrame
-        Panel completo, ordenado por tienda, categoría y fecha.
+        Complete panel, sorted by store, category and date.
     """
     grid = pd.MultiIndex.from_product(
         [calendar["date"], tx["store_id"].unique(), tx["category"].unique()], names=PANEL_KEYS
@@ -47,37 +47,37 @@ def complete_grid(tx: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFrame:
 
 
 def reconstruct_payments(tx: pd.DataFrame) -> pd.DataFrame:
-    """Reconstruye efectivo, conteo real de transacciones y ticket.
+    """Reconstruct cash transactions, the real transaction count and the ticket.
 
-    Orden de reconstrucción de ``cash_transactions`` (columna ``cash_source``):
+    Order used to fill ``cash_transactions`` (recorded in ``cash_source``):
 
-    1. ``reportado``: venía en el archivo.
-    2. ``identidad``: día sin promoción → ``total - tarjeta`` (identidad exacta en
-       el 100% de filas sin promoción).
-    3. ``ticket``: día con promoción y ticket disponible → ``monto/ticket - tarjeta``
-       (exacta en el 100% de filas comprobables; ``total`` está inflado en promo).
-    4. ``estimado``: promoción sin ticket → ``monto_efectivo / ticket_tarjeta``,
-       supone ticket igual en efectivo y tarjeta (diferencia observada ±5%).
+    1. ``reported``: present in the file.
+    2. ``identity``: day without promotion -> ``total - card`` (exact identity in
+       100% of non-promotion rows).
+    3. ``ticket``: promotion day with ticket available -> ``amount / ticket - card``
+       (exact in 100% of checkable rows; ``total`` is inflated on promotion days).
+    4. ``estimated``: promotion day without ticket -> ``cash_amount / card_ticket``,
+       assuming the same ticket for cash and card (observed difference +/-5%).
 
-    ``amount_cash`` se deduce siempre como ``amount_total - amount_card``.
+    ``amount_cash`` is always deduced as ``amount_total - amount_card``.
 
     Parameters
     ----------
     tx : pandas.DataFrame
-        Panel con las columnas crudas.
+        Panel with the raw columns.
 
     Returns
     -------
     pandas.DataFrame
-        Copia con ``cash_transactions``, ``amount_cash`` y ``avg_ticket`` completos
-        donde fue posible, más ``transactions_clean``, ``phantom_transactions`` y
+        Copy with ``cash_transactions``, ``amount_cash`` and ``avg_ticket`` filled
+        where possible, plus ``transactions_clean``, ``phantom_transactions`` and
         ``cash_source``.
     """
     d = tx.copy()
     d["amount_cash"] = d["amount_cash"].fillna(d["amount_total"] - d["amount_card"])
 
     source = pd.Series(
-        np.where(d["cash_transactions"].notna(), "reportado", "sin_dato"), index=d.index
+        np.where(d["cash_transactions"].notna(), "reported", "missing"), index=d.index
     )
     cash = d["cash_transactions"].astype("Float64")
     no_promo = d["has_promotion"] == 0
@@ -85,7 +85,7 @@ def reconstruct_payments(tx: pd.DataFrame) -> pd.DataFrame:
 
     m = cash.isna() & no_promo
     cash[m] = d.loc[m, "total_transactions"] - d.loc[m, "card_transactions"]
-    source[m] = "identidad"
+    source[m] = "identity"
 
     m = cash.isna() & promo & d["avg_ticket"].notna()
     cash[m] = (d.loc[m, "amount_total"] / d.loc[m, "avg_ticket"]).round() - d.loc[
@@ -96,10 +96,10 @@ def reconstruct_payments(tx: pd.DataFrame) -> pd.DataFrame:
     m = cash.isna() & promo
     card_ticket = d.loc[m, "amount_card"] / d.loc[m, "card_transactions"]
     cash[m] = (d.loc[m, "amount_cash"] / card_ticket).round()
-    source[m] = "estimado"
+    source[m] = "estimated"
 
-    # Las filas agregadas por complete_grid no tienen nada que reconstruir.
-    source[d["total_transactions"].isna()] = "sin_dato"
+    # Rows added by complete_grid have nothing to reconstruct.
+    source[d["total_transactions"].isna()] = "missing"
 
     d["cash_transactions"] = cash.round().astype("Int64")
     d["cash_source"] = source.astype(str)
@@ -114,22 +114,22 @@ def reconstruct_payments(tx: pd.DataFrame) -> pd.DataFrame:
 def build_clean_panel(
     tx: pd.DataFrame, stores: pd.DataFrame, calendar: pd.DataFrame
 ) -> pd.DataFrame:
-    """Panel limpio listo para análisis: malla completa + pagos reconstruidos + atributos.
+    """Build the clean panel: full grid + reconstructed payments + attributes.
 
-    ``total_transactions`` se conserva renombrada como ``total_transactions_reported``
-    para trazabilidad, pero el conteo a usar es ``transactions_clean``.
-    ``replenishment_signal`` se conserva solo como referencia del sistema actual;
-    ``configs/config.yaml`` la declara prohibida como variable de modelo.
+    ``total_transactions`` is kept as ``total_transactions_reported`` for traceability,
+    but the count to use is ``transactions_clean``. ``replenishment_signal`` is kept
+    only as a reference of the current system; ``configs/config.yaml`` bans it as a
+    model feature.
 
     Parameters
     ----------
     tx, stores, calendar : pandas.DataFrame
-        Salida de ``io.load_raw``.
+        Output of ``io.load_raw``.
 
     Returns
     -------
     pandas.DataFrame
-        Una fila por fecha × tienda × categoría con atributos de tienda y calendario.
+        One row per date x store x category, with store and calendar attributes.
     """
     panel = reconstruct_payments(complete_grid(tx, calendar))
     panel = panel.rename(columns={"total_transactions": "total_transactions_reported"})

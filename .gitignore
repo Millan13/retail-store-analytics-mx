@@ -29,3 +29,4 @@ _private/
 
 # Sistema
 .DS_Store
+mlflow.db
