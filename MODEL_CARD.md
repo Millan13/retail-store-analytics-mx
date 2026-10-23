@@ -127,7 +127,7 @@ son la propuesta.
 | Respaldo | Si fallan los contratos o la corrida, se usa el sistema actual (promedio de 7 días sin información futura), que se sigue calculando en paralelo. |
 | Monitoreo | WAPE y sesgo semanales por formato y región frente al sistema actual. Alerta si el WAPE de dos semanas seguidas supera al del sistema actual o si el sesgo pasa de ±5%. |
 | Adopción | Piloto de 90 días con tiendas de control emparejadas por formato y región, midiendo agotados e inventario reales para confirmar el impacto simulado. |
-| Infraestructura | Datos en Cloud Storage (ya soportado con `RAW_DATA_URI`), un job programado que corre el pipeline y MLflow como registro de modelos y métricas. |
+| Infraestructura | Trasladable a GCP sin cambiar la lógica: datos en Cloud Storage o BigQuery, `make predict` semanal como Cloud Run Job con Cloud Scheduler (o Vertex AI Pipeline) y MLflow en un servidor compartido. |
 
 ## Reproducibilidad
 

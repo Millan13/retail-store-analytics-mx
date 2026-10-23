@@ -53,15 +53,17 @@ decisión o conclusión. La lógica vive en `src/retail_analytics/` y tiene prue
    pronóstico del backtest. El calendario futuro (quincenas, festivos de fecha fija, lunes de la
    Ley Federal del Trabajo, Semana Santa y Buen Fin) se genera con reglas que reproducen las 425
    fechas del calendario real.
-2. **Datos en la nube.** Los datos se leen desde Cloud Storage (ya soportado con `RAW_DATA_URI`)
-   y se validan con los contratos de `contracts.py` antes de entrenar; si fallan, no se publica
-   el pronóstico y se usa el sistema actual como respaldo.
-3. **Un job programado** cada domingo (por ejemplo, un contenedor con `uv.lock` en Cloud Run o
-   Vertex AI) que corra `make predict` y entregue la tabla al sistema de reposición. Este paso y
-   el siguiente son la propuesta; no están implementados en el repositorio.
-4. **Seguimiento y monitoreo.** Cada corrida queda registrada en MLflow; el WAPE y el sesgo
-   semanales por formato y región se comparan contra el sistema actual, con alertas si el
-   modelo deja de ganarle.
+2. **Corrida semanal y monitoreo (propuesta).** Correr `make predict` cada domingo y entregar la
+   tabla al sistema de reposición; si los datos no pasan los contratos de `contracts.py`, se usa
+   el sistema actual como respaldo. El WAPE y el sesgo semanales por formato y región se comparan
+   contra el sistema actual, con alertas si el modelo deja de ganarle.
+
+> **Nota: cómo se trasladaría a GCP.** La lógica no cambia, solo dónde corre: los CSV pasarían a
+> Cloud Storage o BigQuery; una imagen de contenedor con las versiones de `uv.lock` correría
+> `make predict` cada semana como Cloud Run Job programado con Cloud Scheduler (o como un
+> Vertex AI Pipeline, con `make forecast` para reentrenar y reelegir el modelo cada trimestre);
+> MLflow pasaría a un servidor compartido, y el pronóstico se escribiría en BigQuery para el
+> sistema de reposición y el tablero de monitoreo.
 
 ## Cómo correrlo
 
@@ -120,10 +122,6 @@ pip install -e . --no-deps
 pytest
 ```
 
-**Datos en la nube.** Por defecto se leen de `data/raw/`. Para leerlos de Google Cloud Storage,
-copia `.env.example` a `.env`, define `RAW_DATA_URI=gs://...` e instala el extra
-`uv sync --extra gcs` (con pip: `pip install gcsfs`). Las credenciales se pasan solo por variables de entorno.
-
 ## Estructura
 
 ```
@@ -137,7 +135,7 @@ docs/                   diccionario de datos y bitácora de decisiones
 notebooks/              01 EDA · 02 pronóstico · 03 promociones · 04 potencial
 reports/                presentación ejecutiva (PDF) y mapa (interactivo y estático)
 src/retail_analytics/
-  io.py, config.py      carga de datos (local o gs://) y configuración
+  io.py, config.py      carga de datos y configuración
   contracts.py          contratos de datos (pandera)
   quality.py            diagnósticos de calidad
   cleaning.py           limpieza y reconstrucción de campos
