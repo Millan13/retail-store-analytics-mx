@@ -33,7 +33,7 @@ matrices de priorización para decidir dónde actuar.
 | Pronóstico | `notebooks/02_pronostico.ipynb`, `features.py`, `forecast.py`, `evaluate.py`, `pipeline.py` | Test de fuga, auditoría independiente, backtest con origen móvil |
 | Promociones | `notebooks/03_promociones.ipynb`, `promotions.py` | Prueba A/A, test que recupera un efecto conocido |
 | Potencial | `notebooks/04_potencial_tiendas.ipynb`, `potential.py` | Estabilidad del índice entre periodos, sensibilidad al método |
-| Comunicación | `README.md`, `MODEL_CARD.md` y una presentación ejecutiva que se comparte por separado | |
+| Comunicación | `README.md`, `MODEL_CARD.md` (incluye cómo se operaría) y `reports/presentacion_ejecutiva.pdf` | Cifras de la presentación generadas desde los resultados del repositorio |
 
 Cada etapa se trabajó en su propia rama de git y se integró a `main` al cerrarse.
 
@@ -41,14 +41,14 @@ Cada etapa se trabajó en su propia rama de git y se integró a `main` al cerrar
 
 | Necesidad | Herramienta |
 |---|---|
-| Entorno reproducible | `uv` (Python 3.12, versiones fijadas en `uv.lock`) |
+| Entorno reproducible | `uv` (Python 3.12, versiones fijadas en `uv.lock`); `requirements.txt` para pip; `Makefile` y `make.bat` con los mismos comandos en Mac/Linux y Windows |
 | Datos y transformaciones | pandas, DuckDB, pyarrow |
 | Contratos de datos | pandera |
 | Estadística | statsmodels (OLS, efectos fijos, errores agrupados), SciPy |
 | Modelos | scikit-learn (regresión Poisson), LightGBM, XGBoost, statsmodels (Holt-Winters) |
 | Seguimiento de experimentos | MLflow (backend SQLite local, `mlflow.db`) |
 | Visualización | seaborn / matplotlib; geopandas y folium para mapas |
-| Calidad de código | pytest, ruff, pre-commit, GitHub Actions |
+| Calidad de código | pytest, ruff, pre-commit, GitHub Actions (Linux y Windows) |
 | Datos en la nube | lectura `gs://` vía `fsspec` (variable `RAW_DATA_URI`); credenciales solo por variables de entorno |
 
 ## 4. Uso de inteligencia artificial
@@ -96,5 +96,6 @@ Los dejo documentados porque muestran por qué la verificación importa:
 
 ## 5. Cómo reproducir
 
-Ver [README.md](README.md#cómo-correrlo). En resumen: `make setup`, `make test-all`,
-`make forecast` (≈30 min) y abrir los notebooks.
+Ver [README.md](README.md#cómo-correrlo). En resumen: instalar uv, `make setup` y `make test-all`
+(en Windows, `.\make.bat setup` y `.\make.bat test-all`) y abrir los notebooks. Los resultados del
+pronóstico ya vienen en `data/processed/`; `make forecast` los regenera (≈30 min).

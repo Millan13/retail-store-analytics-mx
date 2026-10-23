@@ -1,0 +1,15 @@
+modelo,parametros,wape
+poisson_glm,"{""alpha"": 0.0001}",0.24805776644407854
+poisson_glm,"{""alpha"": 0.01}",0.24807346723194265
+lightgbm,"{""objective"": ""poisson"", ""num_leaves"": 31, ""n_estimators"": 300}",0.2445308484140808
+lightgbm,"{""objective"": ""poisson"", ""num_leaves"": 31, ""n_estimators"": 600}",0.24328442021180227
+lightgbm,"{""objective"": ""poisson"", ""num_leaves"": 63, ""n_estimators"": 300}",0.24419016882272299
+lightgbm,"{""objective"": ""poisson"", ""num_leaves"": 63, ""n_estimators"": 600}",0.243826219546347
+lightgbm,"{""objective"": ""tweedie"", ""num_leaves"": 31, ""n_estimators"": 300}",0.24183763055300284
+lightgbm,"{""objective"": ""tweedie"", ""num_leaves"": 31, ""n_estimators"": 600}",0.24170615079296576
+lightgbm,"{""objective"": ""tweedie"", ""num_leaves"": 63, ""n_estimators"": 300}",0.2429746901114694
+lightgbm,"{""objective"": ""tweedie"", ""num_leaves"": 63, ""n_estimators"": 600}",0.24348689373608673
+xgboost,"{""max_depth"": 6, ""n_estimators"": 300}",0.24331014785295374
+xgboost,"{""max_depth"": 6, ""n_estimators"": 600}",0.24247372023966876
+xgboost,"{""max_depth"": 8, ""n_estimators"": 300}",0.24304034799815094
+xgboost,"{""max_depth"": 8, ""n_estimators"": 600}",0.24319717738260663

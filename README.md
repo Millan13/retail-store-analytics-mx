@@ -14,16 +14,19 @@ Antes de modelar, el análisis encontró **dos campos del sistema que llevan a c
 la señal de reposición usa la venta del día siguiente, y el conteo de transacciones viene inflado
 ~22% en días de promoción. Ambos se corrigen o excluyen en todo el proyecto.
 
+![Oportunidad anual por región si cada tienda alcanza la mediana de su formato](reports/figures/mapa_potencial_regional.png)
+
 ## Cómo navegar el repositorio
 
 | Si quieres... | Ve a |
 |---|---|
+| Ver la historia completa en 20 minutos | [reports/presentacion_ejecutiva.pdf](reports/presentacion_ejecutiva.pdf) |
 | Entender los datos y cómo se definió el problema | [notebooks/01_eda.ipynb](notebooks/01_eda.ipynb) |
 | Ver el pronóstico, la comparación de modelos y el impacto en MXN | [notebooks/02_pronostico.ipynb](notebooks/02_pronostico.ipynb) |
 | Ver la evaluación de promociones | [notebooks/03_promociones.ipynb](notebooks/03_promociones.ipynb) |
-| Ver el potencial de tiendas, el mapa y la matriz | [notebooks/04_potencial_tiendas.ipynb](notebooks/04_potencial_tiendas.ipynb) · [mapa interactivo](reports/figures/mapa_potencial_regional.html) |
+| Ver el potencial de tiendas, el mapa y la matriz | [notebooks/04_potencial_tiendas.ipynb](notebooks/04_potencial_tiendas.ipynb) · [mapa interactivo](reports/figures/mapa_potencial_regional.html) (descargar y abrir en el navegador) |
 | Revisar por qué se tomó cada decisión | [docs/decisiones.md](docs/decisiones.md) |
-| Leer la ficha del modelo | [MODEL_CARD.md](MODEL_CARD.md) |
+| Leer la ficha del modelo y cómo se operaría | [MODEL_CARD.md](MODEL_CARD.md) |
 | Saber cómo se trabajó y cómo se usó IA | [PROCESS.md](PROCESS.md) |
 
 Los notebooks se leen de arriba abajo: cada sección abre con una pregunta y cierra con una
@@ -31,36 +34,63 @@ decisión o conclusión. La lógica vive en `src/retail_analytics/` y tiene prue
 
 ## Cómo correrlo
 
-Requisitos: [uv](https://docs.astral.sh/uv/) (instala Python 3.12 por su cuenta) y `make`.
+Los resultados del pronóstico ya vienen en `data/processed/`: basta con preparar el entorno y abrir
+los notebooks. Las mismas instrucciones se prueban en Windows y Linux en cada commit (CI).
 
-```bash
-make setup      # entorno con versiones fijadas (uv.lock), kernel de Jupyter y hooks de pre-commit
-make test-all   # 42 pruebas, incluida la validación de los CSV reales (checksum + contratos)
-make forecast   # selección de variables, ajuste y comparación de modelos (~30 min); escribe data/processed/
-make eda        # re-ejecuta el notebook de EDA
+**1. Instalar [uv](https://docs.astral.sh/uv/)** (una sola vez). uv instala Python 3.12 y las
+versiones exactas de librerías fijadas en `uv.lock`; no hace falta tener Python instalado.
+
+```powershell
+# Windows (PowerShell); después cerrar y abrir la terminal
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Después de `make forecast`, los notebooks 02 a 04 se pueden ejecutar en Jupyter o VS Code con el
-kernel **retail-analytics (.venv)**. Cada corrida del pronóstico queda registrada en MLflow:
+```bash
+# Mac / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**2. Correr desde la carpeta del repositorio.** `make.bat` (Windows) y `Makefile` (Mac/Linux) tienen
+los mismos comandos.
+
+| Paso | Windows (PowerShell o cmd) | Mac / Linux |
+|---|---|---|
+| Preparar el entorno | `.\make.bat setup` | `make setup` |
+| Correr las 42 pruebas (incluye checksum y contratos de los CSV) | `.\make.bat test-all` | `make test-all` |
+| Regenerar `data/processed/` (opcional, ~30 min) | `.\make.bat forecast` | `make forecast` |
+| Re-ejecutar el notebook de EDA (opcional) | `.\make.bat eda` | `make eda` |
+
+**3. Abrir los notebooks** con `uv run jupyter lab`, o en VS Code eligiendo el kernel
+**retail-analytics (.venv)**. Cada corrida del pipeline queda registrada en MLflow:
+`uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
+
+**Sin uv (solo pip, Python 3.11 o 3.12).** `requirements.txt` tiene las mismas versiones que
+`uv.lock` (CI verifica que coincidan):
 
 ```bash
-uv run mlflow ui --backend-store-uri sqlite:///mlflow.db
+python -m venv .venv
+.venv\Scripts\activate            # Mac / Linux: source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e . --no-deps
+pytest
 ```
 
 **Datos en la nube.** Por defecto se leen de `data/raw/`. Para leerlos de Google Cloud Storage,
 copia `.env.example` a `.env`, define `RAW_DATA_URI=gs://...` e instala el extra
-`uv sync --extra gcs`. Las credenciales se pasan solo por variables de entorno.
+`uv sync --extra gcs` (con pip: `pip install gcsfs`). Las credenciales se pasan solo por variables de entorno.
 
 ## Estructura
 
 ```
+pyproject.toml, uv.lock dependencias y versiones fijadas (requirements.txt: la misma lista para pip)
+Makefile, make.bat      atajos de comandos (Mac/Linux y Windows)
 configs/config.yaml     rutas, horizonte del pronóstico, semanas de validación y prueba, columnas prohibidas
 data/raw/               datos originales, inmutables, con checksum (MANIFEST.sha256)
 data/external/          polígonos de estados (solo para el mapa; fuente en su README)
-data/processed/         resultados regenerables (no se versionan)
+data/processed/         resultados del pronóstico (se versionan para no esperar 30 min; make forecast los regenera)
 docs/                   diccionario de datos y bitácora de decisiones
 notebooks/              01 EDA · 02 pronóstico · 03 promociones · 04 potencial
-reports/figures/        mapa interactivo
+reports/                presentación ejecutiva (PDF) y mapa (interactivo y estático)
 src/retail_analytics/
   io.py, config.py      carga de datos (local o gs://) y configuración
   contracts.py          contratos de datos (pandera)
